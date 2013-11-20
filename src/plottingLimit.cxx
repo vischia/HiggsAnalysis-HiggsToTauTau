@@ -83,25 +83,32 @@ plottingLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* ou
   }
   if(expected){
     if(bestfit){
+//      expected->SetLineColor(kBlack);
+//      expected->SetLineWidth(3);
+//      expected->SetLineStyle(1);
+//      expected->SetMarkerColor(kBlack);
+//      expected->SetMarkerSize(1.0);
+//      expected->SetMarkerStyle(20);
+//      expected->Draw("PL");
       expected->SetLineColor(kBlack);
       expected->SetLineWidth(3);
-      expected->SetLineStyle(1);
+      expected->SetLineStyle(2);
       expected->SetMarkerColor(kBlack);
       expected->SetMarkerSize(1.0);
-      expected->SetMarkerStyle(20);
+      expected->SetMarkerStyle(21);
       expected->Draw("PL");
     }
     else{
-      expected->SetLineColor(kRed);
+      expected->SetLineColor(kBlack);
       expected->SetLineWidth(3);
-      expected->SetLineStyle(1);
+      expected->SetLineStyle(2);
       expected->Draw("L");
     }
   }
   if(unit){
     unit->SetLineColor(kBlue);
     unit->SetLineWidth(3.);
-    unit->Draw("Lsame");
+    //    unit->Draw("Lsame");
   }
   if(observed){
     observed->SetMarkerColor(kBlack);

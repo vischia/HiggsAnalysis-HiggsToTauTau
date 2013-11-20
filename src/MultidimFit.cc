@@ -104,8 +104,11 @@ PlotLimits::band1D(ostream& out, std::string& xval, std::string& yval, TGraph* b
   float xmin = -1, xmax = -1.;
   float ymin = -1, ymax = -1.; 
   for(int i=0; i<band->GetN(); ++i){
+    std::cout << "DEBUG: L107" << std::endl;
     if(xmin<0 || band->GetX()[i]<xmin){
+      std::cout << "DEBUG: L109" << std::endl;
       xmin = band->GetX()[i];
+      std::cout << "DEBUG: L111" << std::endl;
     }
     if(xmax<0 || band->GetX()[i]>xmax){
       xmax = band->GetX()[i];
@@ -117,6 +120,7 @@ PlotLimits::band1D(ostream& out, std::string& xval, std::string& yval, TGraph* b
       ymax = band->GetY()[i];
     }
   }
+  std::cout << "DEBUG: L120" << std::endl;
   xmin-=xoffset, xmax-=xoffset; ymin-=yoffset, ymax-=yoffset;
   out << std::setw(3) << " " << xval << " :"
       << std::setw(5) << " " << std::fixed << std::setprecision(3) << bestFit->GetX()[0]
@@ -207,7 +211,7 @@ PlotLimits::plot2DScan(TCanvas& canv, const char* directory)
     // fro more info have a look at http://root.cern.ch/root/html/TH2.html#TH2:Smooth
     if(smooth_){
       std::cout << "apply smoothing before plotting." << std::endl;
-      scan2D->Smooth();
+      scan2D->Smooth(3,"k5b");
     }
     // determine bestfit graph
     float bestFit=-1.; 
@@ -241,7 +245,7 @@ PlotLimits::plot2DScan(TCanvas& canv, const char* directory)
     scan2D->Draw("CONT Z LIST");  // draw contours as filled regions, and save points
     canv.Update();                // needed to force the plotting and retrieve the contours in TGraph
     TObjArray* conts = (TObjArray*)gROOT->GetListOfSpecials()->FindObject("contours");
-
+    std::cout << "DEBUG: L244" << std::endl;
     std::vector<TGraph*> graph68; std::vector<TGraph*> filled68;
     std::vector<TGraph*> graph95; std::vector<TGraph*> filled95;
     // get 68% CL and 95% CL contours 
@@ -267,7 +271,7 @@ PlotLimits::plot2DScan(TCanvas& canv, const char* directory)
 	//std::cout << "contour: " << i << " -- graph: " << g << std::endl;
       }
     }    
-    
+    std::cout << "DEBUG: L270" << std::endl;
     //for(std::vector<TGraph*>::const_reverse_iterator graph=filled95.rbegin(); graph!=filled95.rend(); ++graph){
     //  std::cout << "-------------- GRAPH (filled) -------------------" << std::endl;
     //  for(int bin=0; bin<(*graph)->GetN(); ++bin){
@@ -299,6 +303,7 @@ PlotLimits::plot2DScan(TCanvas& canv, const char* directory)
     else{
       plotting2DScan(canv, plot2D, filled95, filled68, bestfit, xaxis_, yaxis_, masslabel, mass, xmins_[mass], xmaxs_[mass], ymins_[mass], ymaxs_[mass], temp_, log_);    
     }
+    std::cout << "DEBUG: L302" << std::endl;
     // add the CMS Preliminary stamp
     CMSPrelim(dataset_.c_str(), "", 0.160, 0.835);
     //CMSPrelim(dataset_.c_str(), "", 0.145, 0.835);
@@ -307,8 +312,9 @@ PlotLimits::plot2DScan(TCanvas& canv, const char* directory)
     scanOut.open(TString::Format("%s/%d/signal-strength.output", directory, (int)mass));
     scanOut << " --- MultiDimFit ---" << std::endl;
     scanOut << "best fit parameter values and uncertainties from NLL scan:" << std::endl;
+    std::cout << "DEBUG: L311" << std::endl;
     band1D(scanOut, xval, yval, bestfit, graph68.back(), (xmax-xmin)/nbins/2, (ymax-ymin)/nbins/2, "(68%)");
-
+    std::cout << "DEBUG: L313" << std::endl;
     if(png_){
       canv.Print(TString::Format("%s-%s-%s-%d.png", output_.c_str(), label_.c_str(), model_.c_str(), (int)mass));
     }

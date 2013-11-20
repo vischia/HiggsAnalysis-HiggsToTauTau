@@ -92,6 +92,7 @@ PlotLimits::plotLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmEr
   */
 
   // write results to files
+  canv.Print(std::string(output_).append("_").append(label_).append(".C").c_str()); 
   if(png_){ canv.Print(std::string(output_).append("_").append(label_).append(".png").c_str()); }
   if(pdf_){ 
     canv.Print(std::string(output_).append("_").append(label_).append(".pdf").c_str()); 

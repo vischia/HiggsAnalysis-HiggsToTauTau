@@ -66,8 +66,8 @@ parser.add_option_group(cgroup)
 ## MODEL OPTIONS
 ##
 dgroup = OptionGroup(parser, "MODEL OPTIONS", "These are the command line options that can be used to configure the submission of multi-dimensional fits or asymptotic limits that do require specific models. Specific models can be used for option --multidim-fit and for option --asymptotic. Possible model options for option --multidim-fit are: ggH-bbH (MSSM), ggH-qqH (SM), rV-rF (SM) and cV-cF (SM). Possible model options for option --asymptotic are: \"\" (SM), ggH (MSSM) and bbH (MSSM).")
-dgroup.add_option("--physics-model", dest="fitModel", default="", type="choice", choices=["cb-ctau", "cl-cq", "ggH-bbH", "ggH-qqH", "rV-rF", "cV-cF", "ggH", "bbH", ""],
-                  help="Define the model for which you want to submit the process with option --multidim-fit ('ggH-bbH' (MSSM), 'ggH-qqH' (SM) and 'cV-cF' (SM)) or option --asymptotic ('ggH' (MSSM), 'bbH' (MSSM) and '' (SM)). [Default: \"\"]")
+dgroup.add_option("--physics-model", dest="fitModel", default="", type="choice", choices=["HTB-TBH","cb-ctau", "cl-cq", "ggH-bbH", "ggH-qqH", "rV-rF", "cV-cF", "ggH", "bbH", "HTB", "TBH", ""],
+                  help="Define the model for which you want to submit the process with option --multidim-fit ('ggH-bbH' (MSSM), 'ggH-qqH' (SM) and 'cV-cF' (SM)) or option --asymptotic ('ggH' (MSSM), 'bbH' (MSSM), 'HTB' (MSSM), 'TBH' (MSSM) and '' (SM)). [Default: \"\"]")
 parser.add_option_group(dgroup)
 ##
 ## LIKELIHOOD-SCAN
@@ -340,6 +340,16 @@ if options.optMDFit :
         cmd   = ""
         model = ""
         opts  = ""
+        ### MSSM Heavy Charged Higgs: H+->tb vs H+->taunu
+        # First try without physics model options
+        if "HTB-TBH" in options.fitModel :
+            from  HiggsAnalysis.HiggsToTauTau.mssm_multidim_fit_boundaries import mssm_multidim_fit_boundaries as bounds
+            #            cmd   = "lxb-multidim-fit.py --name {PRE}-HEAVY-{MASS} --njob 50 --npoints 800".format(PRE=prefix, MASS=mass)
+            cmd   = "lxb-multidim-fit.py --name {PRE}-HEAVY-{MASS} --njob 50 --npoints 50".format(PRE=prefix, MASS=mass)
+            model = "--physics-model 'HTB-TBH=HiggsAnalysis.CombinedLimit.SimpleHeavyChHiggsModel:heavych'"
+            #model = "--physics-model 'HTB-TBH=HiggsAnalysis.CombinedLimit.LessSimpleChargedHiggsModel:otherchhiggs'"
+            opts  = "--physics-model-options 'modes=HTB,TBH;HTBRange=0:{HTB};TBHRange=0:{TBH}'".format(HTB=bounds["HTB-TBH",mass][0], TBH=bounds["HTB-TBH",mass][1])
+            print mass, bounds["HTB-TBH",mass][0], bounds["HTB-TBH",mass][1]
         ## MSSM ggH versus bbH
         if "ggH-bbH" in options.fitModel :
             from HiggsAnalysis.HiggsToTauTau.mssm_multidim_fit_boundaries import mssm_multidim_fit_boundaries as bounds
@@ -439,6 +449,15 @@ if options.optAsym :
     elif "bbH" in options.fitModel :
         model = "--physics-model 'tmp=HiggsAnalysis.HiggsToTauTau.PhysicsBSMModel:floatingMSSMXSHiggs'"
         opts  = "--physics-model-options 'modes=bbH;bbHRange=0:BBH-BOUND'"
+
+    ## MSSM ggH while bbH is profiled (GGH-BOUND will be resolved in limit.create_card_workspace_with_physics_model)
+    if "HTB" in options.fitModel :
+        model = "--physics-model 'tmpHiggsAnalysis.CombinedLimit.SimpleHeavyChHiggsModel:heavych'"
+        opts  = "--physics-model-options 'modes=HTB;HTBRange=0:HTB-BOUND'"
+    ## MSSM bbH while ggH is profiled (BBH-BOUND will be resolved in limit.create_card_workspace_with_physics_model)
+    elif "TBH" in options.fitModel :
+        model = "--physics-model 'tmpHiggsAnalysis.CombinedLimit.SimpleHeavyChHiggsModel:heavych'"
+        opts  = "--physics-model-options 'modes=TBH;TBHRange=0:TBH-BOUND'"
     ## prepare calculation
     if options.interactive :
         for dir in args :
@@ -577,7 +596,7 @@ if options.optTanb or options.optTanbPlus :
                 cmd = "submit-slave.py --bin combine --method tanb {OLD}".format(OLD="--old" if options.old else "")
         if not cmd == "" :
             grid= []
-            sub = "--interactive" if options.optTanbPlus else "--toysH 100 -t 200 -j 100 --random --server --priority"
+            sub = "--interactive" if options.optTanbPlus else "--toysH 100 -t 200 -j 100 --random --server "
             if len(subvec(args,  90, 249))>0 :
                 dirs = vec2str(subvec(args,  90,  249))
                 grid = [

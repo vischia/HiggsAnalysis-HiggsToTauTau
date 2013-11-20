@@ -44,7 +44,7 @@ plotting2DScan(TCanvas& canv, TH2F* plot2D, std::vector<TGraph*> graph95, std::v
   plot2D->SetNdivisions(505, "X");
   plot2D->SetNdivisions(505, "Y");
   plot2D->SetMinimum(0.);
-  plot2D->Draw("colz");
+  plot2D->Draw("boxz");
   
   /// draw contours for 95% CL
   bool FIRST=true; int igraph=0;
@@ -114,7 +114,9 @@ plotting2DScan(TCanvas& canv, TH2F* plot2D, std::vector<TGraph*> graph95, std::v
   textlabel->SetTextFont  (  62 );
   textlabel->AddText(label);
   textlabel->Draw();
-  
+
+  canv.Modified();
+  canv.Update();
   canv.RedrawAxis();
   return;
 }
