@@ -14,6 +14,7 @@
 #include <TLegend.h>
 #include <TAttLine.h>
 #include <TPaveText.h>
+#include <TColor.h>
 
 #include "$CMSSW_BASE/src/HiggsAnalysis/HiggsToTauTau/interface/HttStyles.h"
 #include "$CMSSW_BASE/src/HiggsAnalysis/HiggsToTauTau/src/HttStyles.cc"
@@ -49,13 +50,13 @@ float blinding_SM(float mass){
 float blinding_MSSM(float mass){ return (100<mass); }
 float maximum(TH1F* h, bool LOG=false){
   if(LOG){
-    if(h->GetMaximum()>1000){ return 1000.*TMath::Nint(30*h->GetMaximum()/1000.); }
+    if(h->GetMaximum()>1000){ return 1000.*TMath::Nint(130*h->GetMaximum()/1000.); }
     if(h->GetMaximum()>  10){ return   10.*TMath::Nint(30*h->GetMaximum()/  10.); }
     return 50*h->GetMaximum(); 
   }
   else{
-    if(h->GetMaximum()>  12){ return 10.*TMath::Nint((1.35*h->GetMaximum()/10.)); }
-    if(h->GetMaximum()> 1.2){ return TMath::Nint((1.65*h->GetMaximum())); }
+    if(h->GetMaximum()>  12){ return 10.*TMath::Nint((1.20*h->GetMaximum()/10.)); }
+    if(h->GetMaximum()> 1.2){ return TMath::Nint((1.50*h->GetMaximum())); }
     return 1.6*h->GetMaximum(); 
   }
 }
@@ -136,34 +137,39 @@ HTT_MM_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
 
   // determine category tag
   const char* category = ""; const char* category_extra = ""; const char* category_extra2 = "";
-  if(std::string(directory) == std::string("mumu_0jet_low"             )){ category = "#mu#mu, 0 jet";          }    
-  if(std::string(directory) == std::string("mumu_0jet_low"             )){ category_extra = "p_{T}(lep1) low";          }    
-  if(std::string(directory) == std::string("mumu_0jet_high"            )){ category = "#mu#mu, 0 jet";          }    
-  if(std::string(directory) == std::string("mumu_0jet_high"            )){ category_extra = "p_{T}(lep1) high";         }    
-  if(std::string(directory) == std::string("mumu_1jet_low"          )){ category = "#mu#mu, 1 jet";          }    
-  if(std::string(directory) == std::string("mumu_1jet_low"          )){ category_extra = "p_{T}(lep1) low";       }    
-  if(std::string(directory) == std::string("mumu_1jet_high"          )){ category = "#mu#mu, 1 jet";          }    
-  if(std::string(directory) == std::string("mumu_1jet_high"          )){ category_extra = "p_{T}(lep1) high";       }    
-  if(std::string(directory) == std::string("mumu_vbf"            )){ category = "#mu#mu, 2 jet";          }    
-  if(std::string(directory) == std::string("mumu_vbf"            )){ category_extra = "VBF";              }    
-  if(std::string(directory) == std::string("mumu_nobtag"               )){ category = "#mu#mu";          }    
-  if(std::string(directory) == std::string("mumu_nobtag"               )){ category_extra = "No B-Tag";                        }    
-  if(std::string(directory) == std::string("mumu_btag"                 )){ category = "#mu#mu";          }    
+  if(std::string(directory) == std::string("mumu_0jet_low"             )){ category = "#mu#mu";          }
+  if(std::string(directory) == std::string("mumu_0jet_low"             )){ category_extra = "0-jet low p_{T}(#mu)";          }
+  if(std::string(directory) == std::string("mumu_0jet_high"            )){ category = "#mu#mu";          }
+  if(std::string(directory) == std::string("mumu_0jet_high"            )){ category_extra = "0-jet high p_{T}(#mu)";         }
+  if(std::string(directory) == std::string("mumu_1jet_low"          )){ category = "#mu#mu";          }
+  if(std::string(directory) == std::string("mumu_1jet_low"          )){ category_extra = "1-jet low p_{T}(#mu)";       }
+  if(std::string(directory) == std::string("mumu_1jet_high"          )){ category = "#mu#mu";          }
+  if(std::string(directory) == std::string("mumu_1jet_high"          )){ category_extra = "1-jet high p_{T}(#mu)";       }
+  if(std::string(directory) == std::string("mumu_vbf"            )){ category = "#mu#mu";          }
+  if(std::string(directory) == std::string("mumu_vbf"            )){ category_extra = "2-jet";              }
+  if(std::string(directory) == std::string("mumu_nobtag"               )){ category = "#mu#mu";          }
+  if(std::string(directory) == std::string("mumu_nobtag"               )){ category_extra = "No B-Tag";                        }
+  if(std::string(directory) == std::string("mumu_btag"                 )){ category = "#mu#mu";          }
   if(std::string(directory) == std::string("mumu_btag"                 )){ category_extra = "B-Tag";                           }
 
   const char* dataset;
+#ifdef MSSM
   if(std::string(inputfile).find("7TeV")!=std::string::npos){dataset = "CMS Preliminary,  H#rightarrow#tau#tau, 4.9 fb^{-1} at 7 TeV";}
-  if(std::string(inputfile).find("8TeV")!=std::string::npos){dataset = "CMS Preliminary,  H#rightarrow#tau#tau, 19.8 fb^{-1} at 8 TeV";}
+  if(std::string(inputfile).find("8TeV")!=std::string::npos){dataset = "CMS Preliminary,  H#rightarrow#tau#tau, 19.7 fb^{-1} at 8 TeV";}
+#else
+  if(std::string(inputfile).find("7TeV")!=std::string::npos){dataset = "CMS, 4.9 fb^{-1} at 7 TeV";}
+  if(std::string(inputfile).find("8TeV")!=std::string::npos){dataset = "CMS, 19.7 fb^{-1} at 8 TeV";}
+#endif
  
   TFile* input = new TFile(inputfile.c_str());
 #ifdef MSSM
   TFile* input2 = new TFile((inputfile+"_$MA_$TANB").c_str());
 #endif
-  TH1F* ZTT      = refill((TH1F*)input ->Get(TString::Format("%s/ZTT"     , directory)), "ZTT"     ); InitHist(ZTT     , "", "", kOrange  -  4, 1001);
-  TH1F* ZMM      = refill((TH1F*)input ->Get(TString::Format("%s/ZMM"     , directory)), "ZMM"     ); InitHist(ZMM     , "", "", kAzure   +  2, 1001);
-  TH1F* TTJ      = refill((TH1F*)input ->Get(TString::Format("%s/TTJ"     , directory)), "TTJ"     ); InitHist(TTJ     , "", "", kBlue    -  8, 1001);
-  TH1F* QCD      = refill((TH1F*)input ->Get(TString::Format("%s/QCD"     , directory)), "QCD"     ); InitHist(QCD     , "", "", kMagenta - 10, 1001);
-  TH1F* Dibosons = refill((TH1F*)input ->Get(TString::Format("%s/Dibosons", directory)), "Dibosons"); InitHist(Dibosons, "", "", kRed     +  2, 1001);
+  TH1F* ZTT      = refill((TH1F*)input ->Get(TString::Format("%s/ZTT"     , directory)), "ZTT"     ); InitHist(ZTT     , "", "", TColor::GetColor(248,206,104), 1001);
+  TH1F* ZMM      = refill((TH1F*)input ->Get(TString::Format("%s/ZMM"     , directory)), "ZMM"     ); InitHist(ZMM     , "", "", TColor::GetColor(100,182,232), 1001);
+  TH1F* TTJ      = refill((TH1F*)input ->Get(TString::Format("%s/TTJ"     , directory)), "TTJ"     ); InitHist(TTJ     , "", "", TColor::GetColor(155,152,204), 1001);
+  TH1F* QCD      = refill((TH1F*)input ->Get(TString::Format("%s/QCD"     , directory)), "QCD"     ); InitHist(QCD     , "", "", TColor::GetColor(250,202,255), 1001);
+  TH1F* Dibosons = refill((TH1F*)input ->Get(TString::Format("%s/Dibosons", directory)), "Dibosons"); InitHist(Dibosons, "", "", TColor::GetColor(222,90,106), 1001);
   TH1F* WJets    = 0;
   if(!(std::string("mumu_nobtag") == std::string(directory))){
     // template has been removed from nobtag categories
@@ -387,7 +393,7 @@ HTT_MM_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
   cat->Draw();
 */
 #ifdef MSSM
-  TPaveText* massA      = new TPaveText(0.55, 0.50+0.061, 0.95, 0.50+0.161, "NDC");
+  TPaveText* massA      = new TPaveText(0.53, 0.50+0.061, 0.95, 0.50+0.161, "NDC");
   massA->SetBorderSize(   0 );
   massA->SetFillStyle(    0 );
   massA->SetTextAlign(   12 );
@@ -399,18 +405,18 @@ HTT_MM_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
 #endif
 
 #ifdef MSSM  
-  TLegend* leg = new TLegend(0.55, 0.65, 0.95, 0.90);
+  TLegend* leg = new TLegend(0.53, 0.65, 0.95, 0.90);
   SetLegendStyle(leg);
   leg->AddEntry(ggH  , "#phi#rightarrow#tau#tau" , "L" );
 #else
-  TLegend* leg = new TLegend(0.50, 0.65, 0.95, 0.90);
+  TLegend* leg = new TLegend(0.52, 0.58, 0.92, 0.89);
   SetLegendStyle(leg);
 #ifndef DROP_SIGNAL
   if(SIGNAL_SCALE!=1){
     leg->AddEntry(ggH  , TString::Format("%.0f#timesH(125 GeV)#rightarrow#tau#tau", SIGNAL_SCALE) , "L" );
   }
   else{
-    leg->AddEntry(ggH  , "H(125 GeV)#rightarrow#tau#tau" , "L" );
+    leg->AddEntry(ggH  , "SM H(125 GeV)#rightarrow#tau#tau" , "L" );
   }
 #endif
 #endif
@@ -451,10 +457,12 @@ HTT_MM_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
 
   std::vector<double> edges;
   TH1F* zero = (TH1F*)ref ->Clone("zero"); zero->Clear();
-  TH1F* rat1 = (TH1F*)data->Clone("rat1"); 
+  TH1F* rat1 = (TH1F*)data->Clone("rat1"); rat1->Reset("ICES");
   for(int ibin=0; ibin<rat1->GetNbinsX(); ++ibin){
-    rat1->SetBinContent(ibin+1, ZMM->GetBinContent(ibin+1)>0 ? data->GetBinContent(ibin+1)/ZMM->GetBinContent(ibin+1) : 0);
-    rat1->SetBinError  (ibin+1, ZMM->GetBinContent(ibin+1)>0 ? data->GetBinError  (ibin+1)/ZMM->GetBinContent(ibin+1) : 0);
+    if(data->GetBinContent(ibin+1) > 0){
+      rat1->SetBinContent(ibin+1, ZMM->GetBinContent(ibin+1)>0 ? data->GetBinContent(ibin+1)/ZMM->GetBinContent(ibin+1) : 0);
+      rat1->SetBinError  (ibin+1, ZMM->GetBinContent(ibin+1)>0 ? data->GetBinError  (ibin+1)/ZMM->GetBinContent(ibin+1) : 0);
+    }
     zero->SetBinContent(ibin+1, 0.);
     zero->SetBinError  (ibin+1, ZMM->GetBinContent(ibin+1)>0 ? ZMM ->GetBinError  (ibin+1)/ZMM->GetBinContent(ibin+1) : 0);
   }
@@ -483,7 +491,7 @@ HTT_MM_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
 #else
   rat1->GetXaxis()->SetTitle("#bf{D}");
 #endif
-  rat1->Draw();
+  rat1->Draw("E0");
   zero->SetFillStyle(  3013);
   zero->SetFillColor(kBlack);
   zero->SetLineColor(kBlack);
@@ -563,11 +571,11 @@ HTT_MM_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
   canv2->SetGridy();
   canv2->cd();
 
-  InitHist  (scales[0], "", "", kOrange  -  4, 1001);
-  InitHist  (scales[1], "", "", kAzure   +  2, 1001);
-  InitHist  (scales[2], "", "", kBlue    -  8, 1001);
-  InitHist  (scales[3], "", "", kMagenta - 10, 1001);
-  InitHist  (scales[4], "", "", kRed     +  2, 1001);
+  InitHist  (scales[0], "", "", TColor::GetColor(248,206,104), 1001);
+  InitHist  (scales[1], "", "", TColor::GetColor(100,182,232), 1001);
+  InitHist  (scales[2], "", "", TColor::GetColor(155,152,204), 1001);
+  InitHist  (scales[3], "", "", TColor::GetColor(250,202,255), 1001);
+  InitHist  (scales[4], "", "", TColor::GetColor(222,90,106), 1001);
   InitHist  (scales[5], "", "", kGreen   -  4, 1001);  
 #ifndef DROP_SIGNAL
   InitSignal(scales[6]);

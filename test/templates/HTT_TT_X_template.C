@@ -14,6 +14,7 @@
 #include <TLegend.h>
 #include <TAttLine.h>
 #include <TPaveText.h>
+#include <TColor.h>
 
 #include "$CMSSW_BASE/src/HiggsAnalysis/HiggsToTauTau/interface/HttStyles.h"
 #include "$CMSSW_BASE/src/HiggsAnalysis/HiggsToTauTau/src/HttStyles.cc"
@@ -47,8 +48,8 @@ float maximum(TH1F* h, bool LOG=false){
     return 50*h->GetMaximum(); 
   }
   else{
-    if(h->GetMaximum()>  12){ return 10.*TMath::Nint((1.35*h->GetMaximum()/10.)); }
-    if(h->GetMaximum()> 1.2){ return TMath::Nint((1.65*h->GetMaximum())); }
+    if(h->GetMaximum()>  12){ return 10.*TMath::Nint((1.20*h->GetMaximum()/10.)); }
+    if(h->GetMaximum()> 1.2){ return TMath::Nint((1.50*h->GetMaximum())); }
     return 1.6*h->GetMaximum(); 
   }
 }
@@ -79,6 +80,44 @@ TH1F* refill(TH1F* hin, const char* sample, bool data=false)
       hout->SetBinError(i+1, 0.);
     }
   }
+  return hout;
+}
+
+TH1F* shape_histos(TH1F* hin, const TString datacard, const TString name)
+/*
+  use the proper histograms and errors including shpae uncertainties as provided by combine
+*/
+{
+  //  for(int ii=1; ii<hin->GetNbinsX()+1; ii++){
+  //    std::cout << "Yuta, " << name << " " << datacard << " bin"  << ii << " => " << hin->GetBinContent(ii) << std::endl;
+  //  }
+
+  TH1F* hout = (TH1F*)hin->Clone(); hout->Clear();
+  TFile* mlfit = new TFile("fitresults/mlfit.root", "READ");
+  TH1F* shape = (TH1F*)mlfit->Get(TString("shapes_fit_s/").Append(datacard).Append("/").Append(name)); // currently problems with data and hioggsprocesses -> different name
+
+  //  for(int ii=1; ii<hin->GetNbinsX()+1; ii++){
+  //    std::cout << "Yuta2, " << name << " " << datacard << " bin"  << ii << " => " << hin->GetBinContent(ii) << std::endl;
+  //  }
+
+  if(shape==0) std::cout << " No histogram found for " << name << std::endl;
+
+  //  for(int i=0; i<hout->GetNbinsX(); ++i)
+  for(int i=1; i<hout->GetNbinsX()+1; i++)
+  {
+    
+    Float_t Norig = hin->GetBinContent(i)*hin->GetBinWidth(i);
+    Float_t Nshape = shape->GetBinContent(i);
+    Float_t scale_err = (Nshape==0) ? 1 : Norig/Nshape;
+
+    //    std::cout << "Yuta " << i << " " << Norig << " " << Nshape << " " << scale_err << std::endl;
+
+    hout->SetBinContent(i,hin->GetBinContent(i)*hin->GetBinWidth(i));
+    hout->SetBinError(i,shape->GetBinError(i)*scale_err);
+    //    hout->SetBinContent(i,shape->GetBinContent(i));
+    //    hout->SetBinError(i,shape->GetBinError(i));
+  }
+  mlfit->Close();
   return hout;
 }
 
@@ -122,47 +161,52 @@ void rescale(TH1F* hin, unsigned int idx)
 }
 
 void 
-HTT_TT_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string inputfile="root/$HISTFILE", const char* directory="tauTau_$CATEGORY")
+//HTT_TT_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string inputfile="root/$HISTFILE", const char* directory="tauTau_$CATEGORY")
+HTT_TT_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., TString datacard="htt_tt_0_8TeV", string inputfile="root/$HISTFILE", const char* directory="tauTau_$CATEGORY")
 {
   // defining the common canvas, axes pad styles
   SetStyle(); gStyle->SetLineStyleString(11,"20 10");
 
   // determine category tag
   const char* category = ""; const char* category_extra = ""; const char* category_extra2 = "";
-  if(std::string(directory) == std::string("tauTau_1jet_high_mediumhiggs")){ category = "#tau_{h}#tau_{h}, 1 jet";                          }    
-  if(std::string(directory) == std::string("tauTau_1jet_high_mediumhiggs")){ category_extra= "p_{T}(lep1) high"; }
-  if(std::string(directory) == std::string("tauTau_1jet_high_mediumhiggs")){ category_extra2= "p_{T}(H) med."; }
-  if(std::string(directory) == std::string("tauTau_1jet_high_highhiggs")){ category = "#tau_{h}#tau_{h}, 1 jet";                          }    
-  if(std::string(directory) == std::string("tauTau_1jet_high_highhiggs")){ category_extra= "p_{T}(lep1) high"; }
-  if(std::string(directory) == std::string("tauTau_1jet_high_highhiggs")){ category_extra2= "p_{T}(H) high"; }
-  if(std::string(directory) == std::string("tauTau_vbf"                  )){ category_extra = "2 jet (VBF)";                     }
-  if(std::string(directory) == std::string("tauTau_nobtag"               )){ category = "#tau_{h}#tau_{h}";                        }
-  if(std::string(directory) == std::string("tauTau_nobtag"               )){ category_extra = "No B-Tag";                        }
-  if(std::string(directory) == std::string("tauTau_btag"                 )){ category = "#tau_{h}#tau_{h}";                           }
-  if(std::string(directory) == std::string("tauTau_btag"                 )){ category_extra = "B-Tag";                           }
+  if(std::string(directory) == std::string("tauTau_1jet_high_mediumhiggs")){ category = "#tau_{h}#tau_{h}";           }
+  if(std::string(directory) == std::string("tauTau_1jet_high_mediumhiggs")){ category_extra= "1-jet boost";           }
+  if(std::string(directory) == std::string("tauTau_1jet_high_highhiggs"  )){ category = "#tau_{h}#tau_{h}";           }
+  if(std::string(directory) == std::string("tauTau_1jet_high_highhiggs"  )){ category_extra= "1-jet large boost";     }
+  if(std::string(directory) == std::string("tauTau_vbf"                  )){ category = "#tau_{h}#tau_{h}";           }
+  if(std::string(directory) == std::string("tauTau_vbf"                  )){ category_extra = "VBF tag";              }
+  if(std::string(directory) == std::string("tauTau_nobtag"               )){ category = "#tau_{h}#tau_{h}";           }
+  if(std::string(directory) == std::string("tauTau_nobtag"               )){ category_extra = "No B-Tag";             }
+  if(std::string(directory) == std::string("tauTau_btag"                 )){ category = "#tau_{h}#tau_{h}";           }
+  if(std::string(directory) == std::string("tauTau_btag"                 )){ category_extra = "B-Tag";                }
 
   const char* dataset;
+#ifdef MSSM
   if(std::string(inputfile).find("7TeV")!=std::string::npos){dataset = "CMS Preliminary,  H#rightarrow#tau#tau,  4.9 fb^{-1} at 7 TeV";}
   if(std::string(inputfile).find("8TeV")!=std::string::npos){
-    if(std::string(inputfile).find("btag")!=std::string::npos){
-      dataset = "CMS Preliminary,  H#rightarrow#tau#tau,  18.4 fb^{-1} at 8 TeV";
+    if(std::string(directory).find("btag")!=std::string::npos){
+      dataset = "CMS Preliminary,  H#rightarrow#tau#tau,  18.3 fb^{-1} at 8 TeV";
     }
     else{
       dataset = "CMS Preliminary,  H#rightarrow#tau#tau,  19.8 fb^{-1} at 8 TeV";
     }
   }
+#else
+  if(std::string(inputfile).find("8TeV")!=std::string::npos){dataset = "CMS, 19.7 fb^{-1} at 8 TeV";}
+#endif
+  
   // open example histogram file
   TFile* input = new TFile(inputfile.c_str());
 #ifdef MSSM
   TFile* input2 = new TFile((inputfile+"_$MA_$TANB").c_str());
 #endif
-  TH1F* Fakes  = refill((TH1F*)input->Get(TString::Format("%s/QCD"     , directory)), "QCD"); InitHist(Fakes, "", "", kMagenta-10, 1001);
-  TH1F* EWK1   = refill((TH1F*)input->Get(TString::Format("%s/W"       , directory)), "W"  ); InitHist(EWK1 , "", "", kRed    + 2, 1001);
-  TH1F* EWK2   = refill((TH1F*)input->Get(TString::Format("%s/ZJ"      , directory)), "ZJ" ); InitHist(EWK2 , "", "", kRed    + 2, 1001);
-//TH1F* EWK3   = refill((TH1F*)input->Get(TString::Format("%s/ZL"      , directory)), "ZL" ); InitHist(EWK3 , "", "", kRed    + 2, 1001);
-  TH1F* EWK    = refill((TH1F*)input->Get(TString::Format("%s/VV"      , directory)), "VV" ); InitHist(EWK  , "", "", kRed    + 2, 1001);
-  TH1F* ttbar  = refill((TH1F*)input->Get(TString::Format("%s/TT"      , directory)), "TT" ); InitHist(ttbar, "", "", kBlue   - 8, 1001);
-  TH1F* Ztt    = refill((TH1F*)input->Get(TString::Format("%s/ZTT"     , directory)), "ZTT"); InitHist(Ztt  , "", "", kOrange - 4, 1001);
+  TH1F* Fakes  = refill((TH1F*)input->Get(TString::Format("%s/QCD"     , directory)), "QCD"); InitHist(Fakes, "", "", TColor::GetColor(250,202,255), 1001);
+  TH1F* EWK1   = refill((TH1F*)input->Get(TString::Format("%s/W"       , directory)), "W"  ); InitHist(EWK1 , "", "", TColor::GetColor(222,90,106), 1001);
+  TH1F* EWK2   = refill((TH1F*)input->Get(TString::Format("%s/ZJ"      , directory)), "ZJ" ); InitHist(EWK2 , "", "", TColor::GetColor(222,90,106), 1001);
+//TH1F* EWK3   = refill((TH1F*)input->Get(TString::Format("%s/ZL"      , directory)), "ZL" ); InitHist(EWK3 , "", "", TColor::GetColor(222,90,106), 1001);
+  TH1F* EWK    = refill((TH1F*)input->Get(TString::Format("%s/VV"      , directory)), "VV" ); InitHist(EWK  , "", "", TColor::GetColor(222,90,106), 1001);
+  TH1F* ttbar  = refill((TH1F*)input->Get(TString::Format("%s/TT"      , directory)), "TT" ); InitHist(ttbar, "", "", TColor::GetColor(155,152,204), 1001);
+  TH1F* Ztt    = refill((TH1F*)input->Get(TString::Format("%s/ZTT"     , directory)), "ZTT"); InitHist(Ztt  , "", "", TColor::GetColor(248,206,104), 1001);
 #ifdef MSSM
   TH1F* ggH    = refill((TH1F*)input2->Get(TString::Format("%s/ggH$MA" , directory)), "ggH"); InitSignal(ggH); ggH->Scale($TANB);
   TH1F* bbH    = refill((TH1F*)input2->Get(TString::Format("%s/bbH$MA" , directory)), "bbH"); InitSignal(bbH); bbH->Scale($TANB);
@@ -205,6 +249,22 @@ HTT_TT_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
 #endif
 
   if(scaled){
+
+    Fakes = refill(shape_histos(Fakes, datacard, "QCD"), "QCD");
+    EWK1  = refill(shape_histos(EWK1, datacard, "W"), "W");
+    EWK2  = refill(shape_histos(EWK2, datacard, "ZJ"), "ZJ");
+    EWK   = refill(shape_histos(EWK, datacard, "VV"), "VV");
+    ttbar = refill(shape_histos(ttbar, datacard, "TT"), "TT"); 
+    Ztt   = refill(shape_histos(Ztt, datacard, "ZTT"), "ZTT"); 
+#ifdef MSSM
+    ggH = refill(shape_histos(ggH, datacard, "ggH$MA"), "ggH$MA"); 
+    bbH = refill(shape_histos(bbH, datacard, "bbH$MA"), "bbH$MA"); 
+#else
+    ggH = refill(shape_histos(ggH, datacard, "ggH"), "ggH");
+    qqH = refill(shape_histos(qqH, datacard, "qqH"), "qqH");
+    VH  = refill(shape_histos(VH, datacard, "VH"), "VH"); 
+#endif
+
     rescale(Fakes, 7); 
     rescale(EWK1 , 3); 
     rescale(EWK2 , 4); 
@@ -325,8 +385,8 @@ HTT_TT_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
   canv->RedrawAxis();
 
   //CMSPrelim(dataset, "#tau_{h}#tau_{h}", 0.17, 0.835);
-  CMSPrelim(dataset, "", 0.18, 0.835);  
-  TPaveText* chan     = new TPaveText(0.20, (category_extra2 && category_extra2[0]=='\0') ? 0.65+0.061 : 0.65+0.061, 0.32, 0.75+0.161, "tlbrNDC");
+  CMSPrelim(dataset, "", 0.16, 0.835);  
+  TPaveText* chan     = new TPaveText(0.52, 0.35, 0.91, 0.55, "tlbrNDC");
   chan->SetBorderSize(   0 );
   chan->SetFillStyle(    0 );
   chan->SetTextAlign(   12 );
@@ -359,7 +419,7 @@ HTT_TT_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
   cat2->Draw();
 */  
 #ifdef MSSM
-  TPaveText* massA      = new TPaveText(0.55, 0.50+0.061, 0.95, 0.50+0.161, "NDC");
+  TPaveText* massA      = new TPaveText(0.53, 0.50+0.061, 0.95, 0.50+0.161, "NDC");
   massA->SetBorderSize(   0 );
   massA->SetFillStyle(    0 );
   massA->SetTextAlign(   12 );
@@ -371,17 +431,17 @@ HTT_TT_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
 #endif
   
 #ifdef MSSM
-  TLegend* leg = new TLegend(0.55, 0.65, 0.95, 0.88);
+  TLegend* leg = new TLegend(0.53, 0.65, 0.95, 0.88);
   SetLegendStyle(leg);
   leg->AddEntry(ggH  , "#phi#rightarrow#tau#tau" , "L" );
 #else
-  TLegend* leg = new TLegend(0.50, 0.65, 0.95, 0.88);
+  TLegend* leg = new TLegend(0.52, 0.58, 0.92, 0.89);
   SetLegendStyle(leg);
   if(SIGNAL_SCALE!=1){
     leg->AddEntry(ggH  , TString::Format("%.0f#timesH(125 GeV)#rightarrow#tau#tau", SIGNAL_SCALE) , "L" );
   }
   else{
-    leg->AddEntry(ggH  , "H(125 GeV)#rightarrow#tau#tau" , "L" );
+    leg->AddEntry(ggH  , "SM H(125 GeV)#rightarrow#tau#tau" , "L" );
   }
 #endif
 #ifdef ASIMOV
@@ -524,10 +584,10 @@ HTT_TT_X(bool scaled=true, bool log=true, float min=0.1, float max=-1., string i
   canv2->SetGridy();
   canv2->cd();
 
-  InitHist  (scales[0], "", "", kMagenta-10, 1001);
-  InitHist  (scales[1], "", "", kRed    + 2, 1001);
-  InitHist  (scales[2], "", "", kBlue   - 8, 1001);
-  InitHist  (scales[3], "", "", kOrange - 4, 1001);
+  InitHist  (scales[0], "", "", TColor::GetColor(250,202,255), 1001);
+  InitHist  (scales[1], "", "", TColor::GetColor(222,90,106), 1001);
+  InitHist  (scales[2], "", "", TColor::GetColor(155,152,204), 1001);
+  InitHist  (scales[3], "", "", TColor::GetColor(248,206,104), 1001);
   InitSignal(scales[4]);
   InitSignal(scales[5]);
   InitSignal(scales[6]);

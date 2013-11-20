@@ -8,9 +8,11 @@ ROOT.gSystem.Load('$CMSSW_BASE/lib/$SCRAM_ARCH/libHiggsAnalysisCombinedLimit.so'
 from ROOT import th1fmorph
 
 class Morph:
-    def __init__(self,input,directories,samples,uncerts,masses,step_size,verbose,extrapolate):
+    def __init__(self,input,directories,samples,uncerts,masses,step_size,verbose,extrapolate,trivial):
         ## verbose
         self.verbose = verbose
+        ## trivial
+        self.trivial = trivial
         ## input file
         self.input = input
         ## step size
@@ -47,6 +49,29 @@ class Morph:
             hist.SetBinContent(1, 10e-6)
         return hist
 
+    def no_negative(self,file, directory, sample, value):
+        """
+        set any negative entries of the histogram to zero.
+        """
+        name = sample
+        hist = self.load_hist(file, directory, name.format(MASS=value))
+        print file, directory, name.format(MASS=value)
+        for i in range(hist.GetNbinsX()):
+            if hist.GetBinContent(i+1) < 0:
+                print "Warning: setting negativ content of bin {BIN} to zero".format(BIN=str(i))
+                hist.SetBinContent(i+1,0)
+        file.Cd("/"+directory)
+        hist.Write(name.format(MASS=value),ROOT.TObject.kOverwrite)
+        for uncert in self.uncerts:
+            for suffix in ['Up','Down']:
+                name = sample+'_'+uncert+suffix
+                hist = self.load_hist(file, directory, name.format(MASS=value))
+                for i in range(hist.GetNbinsX()):
+                    if hist.GetBinContent(i+1) < 0:
+                        hist.SetBinContent(i+1,0)
+                file.Cd("/"+directory)
+                hist.Write(name.format(MASS=value),ROOT.TObject.kOverwrite)
+
     def norm_hist(self, hist_lower, hist_upper, lower, upper, value) :
         """
         Determine the normalization for the morphed histogram from the lower and
@@ -67,7 +92,13 @@ class Morph:
         hist_lower = self.zero_safe(self.load_hist(file, directory, name.format(MASS=lower)))
         hist_upper = self.zero_safe(self.load_hist(file, directory, name.format(MASS=upper)))
         norm = self.norm_hist(hist_lower, hist_upper, float(lower), float(upper), float(value))
-        hist_morph = th1fmorph(name.format(MASS=value),name.format(MASS=value),hist_lower, hist_upper, float(lower), float(upper), float(value), norm, 0)
+        if self.trivial :
+            if abs(float(value)-float(lower)) < abs(float(upper)-float(value)) :
+                hist_morph = hist_lower.Clone(name.format(MASS=value)); hist_morph.SetTitle(name.format(MASS=value)); hist_morph.Scale(norm/hist_morph.Integral())
+            else :
+                hist_morph = hist_upper.Clone(name.format(MASS=value)); hist_morph.SetTitle(name.format(MASS=value)); hist_morph.Scale(norm/hist_morph.Integral())
+        else :
+            hist_morph = th1fmorph(name.format(MASS=value),name.format(MASS=value),hist_lower, hist_upper, float(lower), float(upper), float(value), norm, 0)
         # th1fmorph() will set a value null if you are right on top of it
         if not hist_lower and lower == value:
             hist_lower = hist_morph
@@ -138,3 +169,4 @@ class Morph:
                                 self.morph_hist(file, dir, sample+'_'+uncert+'Down', mass_low, mass_high, value)
                         except AttributeError:
                             print "Warning: could not find shape systematic %s, skipping"  % uncert
+                    self.no_negative(file, dir, sample, value)

@@ -31,9 +31,9 @@ prune-uncerts-htt.py --mass=160  --blacklist='tauTau_nobtag_8TeV_QCD,tauTau_btag
 (2b) postfit plots (in HiggsAnalysis/HiggsToTauTau/test)
 ## setup postfit plots beginning to the end
 python mlfit_and_copy.py -a mssm --skip --mA [160,350,500] --tanb [8,20,40] $CMSSW_BASE/src/LIMITS-yymmdd-mssm/bbb-mlfit/cmb/[160,350,500]
-python produce_macros.py -a mssm --mA [160,350,500] --tanb [8,20,40] --config $CMSSW_BASE/src/HiggsAnalysis/HiggsToTauTau/data/limits.config-mssm-yymmdd
+python produce_macros.py -a mssm --mA [160,350,500] --tanb [8,20,40] --hww-signal --config $CMSSW_BASE/src/HiggsAnalysis/HiggsToTauTau/data/limits.config-mssm-yymmdd
 python run_macros.py -a mssm --config $CMSSW_BASE/src/HiggsAnalysis/HiggsToTauTau/data/limits.config-mssm-yymmdd
-python summary_plots.py -a mssm
+python summary_plots.py -a mssm --mA [160,350,500] --tanb [8,20,40] --hww-signal
 
 
 (3) launch/collect/plot Goodness-of-fit
@@ -47,10 +47,10 @@ lxq: submit.py --goodness-of-fit --collect-injected-toys LIMITS-yymmdd-mssm/bbb-
 plot --goodness-of-fit HiggsAnalysis/HiggsToTauTau/python/layouts/goodness-of-fit.py LIMITS-yymmdd-mssm/bbb-mlfit masspoints='160 350'
 
 
-(4) launch/collect/plot mA-tanb
+(4) launch/collect/plot mA-tanb 
 ## lauch final setup of datacards
-lxb: lxb-xsec2tanb.py LIMITS-yymmdd-mssm/bbb[-asimov]/*/*
-lxq: lxb-xsec2tanb.py LIMITS-yymmdd-mssm/bbb[-asimov]/*/* --lxq
+lxb: lxb-xsec2tanb.py LIMITS-yymmdd-mssm/bbb[-asimov]/*/* --model [mhmodm,mhmodp,mhmax-mu+200]
+lxq: lxb-xsec2tanb.py LIMITS-yymmdd-mssm/bbb[-asimov]/*/* --model [mhmodm,mhmodp,mhmax-mu+200] --lxq
 ## lauch limit calculation
 lxb: submit.py --tanb+  -q '-q 2nd' LIMITS-yymmdd-mssm/bbb[-asimov]/*/*
 lxq: submit.py --tanb+  LIMITS-yymmdd-mssm/bbb[-asimov]/*/* --lxq --queue="-l h_cpu=48:00:00 -j y -o /dev/null" --options='--multi-core=4'

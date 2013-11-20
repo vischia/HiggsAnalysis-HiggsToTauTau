@@ -16,46 +16,11 @@
 #include "TGraphAsymmErrors.h"
 #include "TLine.h"
 
-#include "/afs/cern.ch/user/p/pharris/Limits/CMSSW_5_2_5/src/HiggsAnalysis/HiggsToTauTau/macros/Utils.h"
-#include "/afs/cern.ch/user/p/pharris/Limits/CMSSW_5_2_5/src/HiggsAnalysis/HiggsToTauTau/interface/HttStyles.h"
-#include "/afs/cern.ch/user/p/pharris/Limits/CMSSW_5_2_5/src/HiggsAnalysis/HiggsToTauTau/src/HttStyles.cc"
+#include "HiggsAnalysis/HiggsToTauTau/macros/Utils.h"
+#include "HiggsAnalysis/HiggsToTauTau/interface/HttStyles.h"
+#include "HiggsAnalysis/HiggsToTauTau/src/HttStyles.cc"
 
 static const double MARKER_SIZE = 1.3;  // 0.7
-
-bool
-channel(std::string& label){
-  return (label==std::string("cmb")        ||
-	  label==std::string("cmb+")       ||
-	  label==std::string("htt")        ||
-	  label==std::string("htt+")       ||
-	  label==std::string("0jet")       ||
-	  label==std::string("2jet")       ||
-	  label==std::string("boost")      ||
-	  label==std::string("btag")       ||
-	  label==std::string("nobtag")     ||
-	  label==std::string("vbf")        ||
-	  label==std::string("tt")         ||
-	  label==std::string("em")         ||
-	  label==std::string("et")         ||
-	  label==std::string("mt")         ||
-	  label==std::string("mm")         ||
-	  label==std::string("ggH")        ||
-	  label==std::string("bbH")        ||
-	  label==std::string("mvis")       ||
-	  label==std::string("test-0")     ||
-	  label==std::string("test-1")     ||
-	  label==std::string("test-2")     ||
-	  label==std::string("test-3")     ||
-	  label==std::string("test-4")     ||
-	  label==std::string("test-5")     ||
-	  label==std::string("HIG-11-020") ||
-	  label==std::string("HIG-11-029") ||
-	  label==std::string("HIG-12-018") ||
-	  label==std::string("HIG-12-032") ||
-	  label==std::string("HIG-12-043") ||
-	  label==std::string("HIG-12-050")
-	  );
-}
 
 std::string legendEntry(const std::string& channel){
   std::string title;
@@ -64,13 +29,14 @@ std::string legendEntry(const std::string& channel){
   if(channel==std::string("mt"        )) title = std::string("#mu#tau_{h}");
   if(channel==std::string("tt"        )) title = std::string("#tau_{h}#tau_{h}");
   if(channel==std::string("mm"        )) title = std::string("#mu#mu");
-  if(channel==std::string("vhtt"      )) title = std::string("VH#rightarrow#tau#tau+l(l)");
-  if(channel==std::string("htt"       )) title = std::string("e#mu+e#tau_{h}+#mu#tau_{h}+#mu#mu");
-  if(channel==std::string("cmb"       )) title = std::string("H#rightarrow#tau#tau");
-  if(channel==std::string("cmb+"      )) title = std::string("H#rightarrow#tau#tau + VH#rightarrow#tau#tau+l(l)");
-  if(channel==std::string("0jet"      )) title = std::string("0-Jet");
-  if(channel==std::string("2jet"      )) title = std::string("V(jj)H(#tau#tau)");
-  if(channel==std::string("vbf"       )) title = std::string("2-Jet (VBF)");
+  if(channel==std::string("ee"        )) title = std::string("ee");
+  if(channel==std::string("vhtt"      )) title = std::string("VH#rightarrow#tau#tau");
+  if(channel==std::string("htt"       )) title = std::string("H#rightarrow#tau#tau");
+  if(channel==std::string("cmb"       )) title = std::string("H#rightarrow#tau#tau+VH#rightarrow#tau#tau");
+  if(channel==std::string("0jet"      )) title = std::string("0-jet");
+  if(channel==std::string("1jet"      )) title = std::string("1-jet");
+  if(channel==std::string("2jet"      )) title = std::string("2-jet (VBF tag)");
+  if(channel==std::string("vbf"       )) title = std::string("2-jet (VBF tag)");
   if(channel==std::string("boost"     )) title = std::string("1-Jet");
   if(channel==std::string("btag"      )) title = std::string("B-Tag");
   if(channel==std::string("nobtag"    )) title = std::string("No B-Tag");
@@ -96,62 +62,33 @@ std::string legendEntry(const std::string& channel){
 void compareBestFit(const char* filename="test.root", const char* channelstr="boost,vbf,vhtt,cmb+", const char* type="sm", double mass=125, double minimum=-1., double maximum=4.5, const char* label="Preliminary, #sqrt{s}=7-8 TeV, L = 24.3 fb^{-1}, H #rightarrow #tau #tau")
 {
   SetStyle();
-
-  std::map<std::string, unsigned int> colors;
-  colors["0jet"       ] = kBlue;
-  colors["2jet"       ] = kMagenta;
-  colors["vbf"        ] = kRed;
-  colors["boost"      ] = kGreen;
-  colors["btag"       ] = kRed;
-  colors["nobtag"     ] = kBlue;
-  colors["em"         ] = kBlue;
-  colors["et"         ] = kRed;
-  colors["mt"         ] = kGreen;
-  colors["mm"         ] = kMagenta;
-  colors["tt"         ] = kOrange;
-  colors["vhtt"       ] = kMagenta+2;
-  colors["cmb"        ] = kBlack;
-  colors["cmb+"       ] = kGray+2;
-  colors["htt"        ] = kBlack;
-  colors["ggH"        ] = kRed;
-  colors["bbH"        ] = kBlue;
-  colors["mvis"       ] = kBlue+2;
-  colors["test-0"     ] = kRed+2;
-  colors["test-1"     ] = kGreen+2;
-  colors["test-2"     ] = kGreen;
-  colors["test-3"     ] = kRed+2;
-  colors["test-4"     ] = kBlue;
-  colors["test-5"     ] = kViolet-6;
-  colors["HIG-11-020" ] = kBlue+2;
-  colors["HIG-11-029" ] = kRed+2;
-  colors["HIG-12-018" ] = kBlue;
-  colors["HIG-12-032" ] = kRed+2;
-  colors["HIG-12-043" ] = kBlack;
-  colors["HIG-12-050" ] = kBlack;
-
-  std::cout << " *******************************************************************************************************\n"
-	    << " * Usage     : root -l                                                                                  \n"
-	    << " *             .x macros/compareBestFit.C+(file, chn, type)                                             \n"
-	    << " *                                                                                                      \n"
-	    << " * Arguments :  + file     const char*      full path to the input file                                 \n"
-	    << " *              + chn      const char*      list of channels; choose between: 'cmb', 'htt', 'em',       \n"
-	    << " *                                          'et', 'mt', 'mm', 'vhtt', 'hgg', 'hww', 'ggH',              \n"
-	    << " *                                          'bbH', 'nomix[-200, +200]', 'mhmax[-400, -200, +200]'       \n"
-	    << " *                                          'mhmax[+400, +600, +800]', 'test-0...5', 'saeff', 'gluph'   \n"
-	    << " *                                          The list should be comma separated and may contain          \n"
-	    << " *                                          whitespaces                                                 \n"
-	    << " *              + type      const char*     type of plot; choose between 'sm' and 'mssm'                \n"
-	    << " *                                                                                                      \n"
-	    << " *              + mass      double          Higgs mass for which the plot should be performed           \n"
-	    << " *                                                                                                      \n"
-	    << " *              + minimum   double          Minimum value for the x-Axis (best fit value)               \n"
-	    << " *                                                                                                      \n"
-	    << " *              + maximum   double          Maximum value for the x-Axis (best fit value)               \n"
-	    << " *                                                                                                      \n"
-	    << " *******************************************************************************************************\n";
+  std::cout << " ********************************************************************************************************\n"
+	    << " * Usage     : root -l                                                                                   \n"
+	    << " *             .x macros/compareBestFit.C+(filename, channelstr, type)                                   \n"
+	    << " *                                                                                                       \n"
+	    << " * Arguments :  + filename   const char*     full path to the input file                                 \n"
+	    << " *              + channelstr const char*     list of channels; choose between: 'cmb', 'htt', 'em',       \n"
+	    << " *                                           'et', 'mt', 'mm', 'vhtt', 'hgg', 'hww', 'ggH',              \n"
+	    << " *                                           'bbH', 'nomix[-200, +200]', 'mhmax[-400, -200, +200]'       \n"
+	    << " *                                           'mhmax[+400, +600, +800]', 'test-0...5', 'saeff', 'gluph'   \n"
+	    << " *                                           The list should be comma separated and may contain          \n"
+	    << " *                                           whitespaces                                                 \n"
+	    << " *              + type       const char*     type of plot; choose between 'sm' and 'mssm'                \n"
+	    << " *                                                                                                       \n"
+	    << " *              + mass       double          Higgs mass for which the plot should be performed           \n"
+	    << " *                                                                                                       \n"
+	    << " *              + minimum    double          Minimum value for the x-Axis (best fit value)               \n"
+	    << " *                                                                                                       \n"
+	    << " *              + maximum    double          Maximum value for the x-Axis (best fit value)               \n"
+	    << " *                                                                                                       \n"
+	    << " ********************************************************************************************************\n";
 
   /// open input file  
   TFile* inputFile = new TFile(filename); if(inputFile->IsZombie()){ std::cout << "ERROR:: file: " << filename << " does not exist.\n"; }
+
+  if(std::string(type).find("sm")!=std::string::npos){
+    label="CMS, 4.9 fb^{-1} at 7 TeV, 19.7 fb^{-1} at 8 TeV";
+  }
 
   /// prepare input parameters
   std::vector<std::string> channels;
@@ -176,6 +113,7 @@ void compareBestFit(const char* filename="test.root", const char* channelstr="bo
   canv1->cd();
   canv1->SetGridx(0);
   canv1->SetGridy(0);
+  canv1->SetLeftMargin(0.05);
 
   TLine* SM   = new TLine(1, 0, 1, hexp.size());
   TLine* ZERO = new TLine(0, 0, 0, hexp.size());
@@ -225,16 +163,13 @@ void compareBestFit(const char* filename="test.root", const char* channelstr="bo
 	gr->SetMaximum(hexp.size());
 	gr->SetMinimum(0);
       }
-      // gr->GetYaxis()->Set(hexp.size(), 0, hexp.size());
-      // gr = new TGraphAsymmErrors(1, value, position, elow, ehigh, help1, help2);
-      // std::cout << gr->GetYaxis()->GetNbins() << std::endl;
       // format x-axis
       std::string x_title;
       if(std::string(type).find("mssm")!=std::string::npos){
 	x_title = std::string("best fit for #sigma(#phi#rightarrow#tau#tau)");
       }
       else{
-	x_title = std::string("best fit for #sigma/#sigma_{SM}");
+	x_title = std::string("Best Fit for #sigma/#sigma_{SM}");
       }
       
       gr->GetXaxis()->SetTitle(x_title.c_str());
@@ -243,6 +178,7 @@ void compareBestFit(const char* filename="test.root", const char* channelstr="bo
       gr->GetXaxis()->SetTitleColor(1);
       gr->GetXaxis()->SetTitleOffset(1.05);
       gr->GetXaxis()->SetLimits(minimum, maximum);
+      gr->GetXaxis()->SetTickLength(0.02);
 
       BAND->GetXaxis()->SetTitle(x_title.c_str());
       BAND->GetXaxis()->SetLabelFont(62);
@@ -257,7 +193,11 @@ void compareBestFit(const char* filename="test.root", const char* channelstr="bo
       //std::cout<<gr->GetYaxis()->GetBinCenter(hexp.size()-i)<<std::endl;
       //BAND->GetYaxis()->SetBinLabel(hexp.size()-1, legendEntry(channels[hexp.size()-1]).c_str());
       for(unsigned int j=0; j<hexp.size(); ++j){
-	gr  ->GetYaxis()->SetBinLabel(hexp.size()-j, legendEntry(channels[j]).c_str());
+        char bestfit_char[40];
+        float central = hexp[j]->Eval(mass);
+        float error = (hband[j]->GetErrorYhigh(massid)+hband[j]->GetErrorYlow(massid))/2;
+        sprintf(bestfit_char,"}}{#bf{#scale[0.7]{%.2f#pm%.2f}}}",central, error);
+        gr  ->GetYaxis()->SetBinLabel(hexp.size()-j, std::string("#splitline{#scale[0.9]{").append(legendEntry(channels[j])).append(bestfit_char).c_str());
       }
       gr->GetYaxis()->SetTickLength(0);
       gr->GetYaxis()->SetLabelFont(62);
@@ -284,15 +224,10 @@ void compareBestFit(const char* filename="test.root", const char* channelstr="bo
     gr->SetTitle("");
     gr->SetLineStyle( 1.);
     gr->SetLineWidth( 2.); 
-    //gr->SetLineColor(colorzxs.find(channels[i])->second);
     gr->SetLineColor(kBlack);
     gr->SetMarkerStyle(kFullCircle);
     gr->SetMarkerSize(MARKER_SIZE);
-    //gr->SetMarkerColor(colors.find(channels[i])->second);
     gr->SetMarkerColor(kBlack);
-    cout << "===> " << gr->GetErrorYhigh(0) << endl;
-    
-    //cout << "==> "<< BAND->GetYaxis()->GetMaximum() << endl;
     if(firstPlot) gr->Draw("AP");  
     if(firstPlot) {
       BAND->Draw("Fsame");  
@@ -312,9 +247,8 @@ void compareBestFit(const char* filename="test.root", const char* channelstr="bo
   ZERO->SetLineStyle(11);
   //ZERO->Draw("same");
   
-
   //TPaveText *pt = new TPaveText(2*(maximum+minimum)/3,hexp.size()-0.3,maximum,hexp.size()-0.02);
-  TPaveText *pt = new TPaveText(0.76, 0.88, 1.0, 1.0, "NDC");
+  TPaveText *pt = new TPaveText(0.56, 0.85, 0.63, 0.88, "NDC");
   if(std::string(type).find("mssm")!=std::string::npos) pt->AddText(TString::Format("m_{A} = %0.0f GeV" , mass));
   else pt->AddText(TString::Format("m_{H} = %0.0f GeV" , mass));
   pt->SetBorderSize(   0 );
@@ -325,7 +259,7 @@ void compareBestFit(const char* filename="test.root", const char* channelstr="bo
   pt->SetTextFont (   62 );
   pt->Draw("same");
   canv1->RedrawAxis();
-  CMSPrelim(label, "", 0.15, 0.835);
+  CMSPrelim(label, "", 0.035, 0.835);
   
   canv1->Print(std::string("BestFit").append(std::string(type).find("mssm")!=std::string::npos ? "_mssm.png" : "_sm.png").c_str());
   canv1->Print(std::string("BestFit").append(std::string(type).find("mssm")!=std::string::npos ? "_mssm.pdf" : "_sm.pdf").c_str());

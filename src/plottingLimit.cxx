@@ -4,17 +4,18 @@
 #include "TCanvas.h"
 #include "TLegend.h"
 #include "TPaveText.h"
+#include "TColor.h"
 #include "TGraphAsymmErrors.h"
+#include <iostream>
 
 void
-plottingLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* outerBand, TGraph* expected, TGraph* observed, TGraph* unit, std::string& xaxis, std::string& yaxis, double min=0., double max=5., bool log=false, std::string PLOT=std::string("LIMIT"), std::string injectedMass=std::string("125"), bool legendOnRight=false, std::string extra_label=std::string(""))
+plottingLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* outerBand, TGraph* expected, TGraph* observed, TGraph* unit, std::string& xaxis, std::string& yaxis, TGraph* expected_injected=0, double min=0., double max=5., bool log=false, std::string PLOT=std::string("LIMIT"), std::string injectedMass=std::string("125"), bool legendOnRight=false, std::string extra_label=std::string(""))
 {
   // define PLOT type
   bool injected = (PLOT == std::string("INJECTED"));
   bool bestfit  = (PLOT == std::string("BESTFIT" ));
   bool BG_Higgs = (PLOT == std::string("BG_HIGGS"));
   bool mssm_log = (PLOT == std::string("MSSM-LOG"));
-
   // set up styles
   canv.cd();
   //canv.SetGridx(1);
@@ -59,7 +60,7 @@ plottingLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* ou
     outerBand->SetLineColor(kBlack);
     if(injected) outerBand->SetFillColor(kAzure-9);
     else if(BG_Higgs) outerBand->SetFillColor(kSpring+5);
-    else outerBand->SetFillColor(kYellow);
+    else outerBand->SetFillColor(TColor::GetColor(252,241,15));
     outerBand->Draw("3");
   }
   if(innerBand){
@@ -110,6 +111,15 @@ plottingLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* ou
     unit->SetLineWidth(3.);
     //    unit->Draw("Lsame");
   }
+
+  if(expected_injected){
+    expected_injected->SetLineColor(kBlue);
+    expected_injected->SetLineWidth(3);
+    expected_injected->SetLineStyle(1);
+    expected_injected->Draw("Lsame");
+  }
+
+
   if(observed){
     observed->SetMarkerColor(kBlack);
     observed->SetMarkerSize(1.0);
@@ -118,6 +128,7 @@ plottingLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* ou
     observed->Draw("PLsame");
   }
 
+  
   TPaveText* extra;
   if(!extra_label.empty()){
     extra = new TPaveText(legendOnRight ? 0.5 : 0.18, 0.60, legendOnRight ? 0.90 : 0.605, 0.70, "NDC");
@@ -131,7 +142,7 @@ plottingLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* ou
     extra->Draw();
   }
   // add proper legend
-  TLegend* leg = new TLegend(legendOnRight ? 0.5 : 0.18, 0.70, legendOnRight ? 0.90 : 0.605, 0.90);
+  TLegend* leg = new TLegend(legendOnRight ? 0.5 : 0.18, 0.70, legendOnRight ? 0.90 : (injected ? 0.75 :0.605), 0.90);
   leg->SetBorderSize( 0 );
   leg->SetFillStyle( 1001 );
   leg->SetFillColor(kWhite);
@@ -139,13 +150,17 @@ plottingLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* ou
     leg->AddEntry(observed, "observed",  "PL");
     //leg->AddEntry(observed, "Asimov w/ H(125)",  "PL");
   }
+  if(expected_injected){
+    if(!mssm_log) leg->AddEntry( expected_injected , TString::Format("SM H(%s GeV) injected", injectedMass.c_str()),  "L" );
+    else leg->AddEntry( expected_injected , "SM H injected",  "L" );
+  }
   if(injected){
-    leg->AddEntry( expected , TString::Format("H(%s GeV) injected", injectedMass.c_str()),  "L" );
-    if(innerBand){ leg->AddEntry( innerBand, TString::Format("#pm 1#sigma H(%s GeV) injected", injectedMass.c_str()),  "F" ); }
-    if(outerBand){ leg->AddEntry( outerBand, TString::Format("#pm 2#sigma H(%s GeV) injected", injectedMass.c_str()),  "F" ); }
+    leg->AddEntry( expected , TString::Format("expected for SM H(%s GeV)", injectedMass.c_str()),  "L" );
+    if(innerBand){ leg->AddEntry( innerBand, TString::Format("#pm 1#sigma expected", injectedMass.c_str()),  "F" ); }
+    if(outerBand){ leg->AddEntry( outerBand, TString::Format("#pm 2#sigma expected", injectedMass.c_str()),  "F" ); }
   }
   else if(BG_Higgs){
-    leg->AddEntry( expected , TString::Format("H(%s GeV) as BG", injectedMass.c_str()),  "L" );
+    leg->AddEntry( expected , TString::Format("expected for H(%s GeV) as BG", injectedMass.c_str()),  "L" );
     if(innerBand){ leg->AddEntry( innerBand, TString::Format("#pm 1#sigma H(%s GeV) as BG", injectedMass.c_str()),  "F" ); }
     if(outerBand){ leg->AddEntry( outerBand, TString::Format("#pm 2#sigma H(%s GeV) as BG", injectedMass.c_str()),  "F" ); }  
   }
@@ -154,7 +169,7 @@ plottingLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* ou
     if(innerBand){ leg->AddEntry( innerBand, "#pm 1#sigma (best fit)" ,  "PLF" ); }
   }
   else{
-    leg->AddEntry( expected , "expected",  "L" );
+    leg->AddEntry( expected , "median expected",  "L" );
     if(innerBand){ leg->AddEntry( innerBand, "#pm 1#sigma expected",  "F" ); }
     if(outerBand){ leg->AddEntry( outerBand, "#pm 2#sigma expected",  "F" ); }
   }

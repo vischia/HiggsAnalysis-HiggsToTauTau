@@ -72,9 +72,9 @@ class PlotLimits {
   ~PlotLimits() {};
 
   /// fill the central value either for observed or expected
-  TGraph* fillCentral(const char* directory, TGraph* plot, const char* filename);
+  TGraph* fillCentral(const char* directory, TGraph* plot, const char* filename, const char* low_tanb="");
   /// fill the +/-1sigma and +/-2sigma uncertainty band
-  TGraphAsymmErrors* fillBand(const char* directory, TGraphAsymmErrors* plot, const char* method, bool innerBand);
+  TGraphAsymmErrors* fillBand(const char* directory, TGraphAsymmErrors* plot, const char* method, bool innerBand, const char* low_tanb="");
   /// print tabulated limits to a txt file, for inner band, outer band, expected and observed, w/o inner and outer band
   void print(const char* filename, TGraph* expected, TGraph* observed, const char* type="txt");
   /// print tabulated limits to a txt file, for inner band, outer band, expected and observed, with inner and outer band
@@ -96,7 +96,7 @@ class PlotLimits {
   /// plot limits on canvas, print out png, pdf, txt, root formats if desired
   void plotLimit(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* outerBand, TGraph* expected, TGraph* observed=0);
   /// plot limits for tanb on canvas, print out png, pdf, txt, root formats if desired
-  void plotTanb(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* outerBand, TGraph* expected, TGraph* observed=0, const char* directory="");
+  void plotTanb(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErrors* innerBand_low, TGraphAsymmErrors* outerBand, TGraphAsymmErrors* outerBand_low, TGraph* expected, TGraph* expected_low, TGraph* observed=0, TGraph* observed_low=0, const char* directory="");
   /// plot bestfit values for different parameters dependend on mass on canvas, print out png, pdf, txt, root formats if desired 
   void plotSignalStrength(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraph* central, const char* directory="");
   /// plot significance on canvas, print out png, pdf, txt, root formats if desired  
@@ -134,12 +134,12 @@ class PlotLimits {
   /// 0.975   : +2sigma
   void prepareByValue(const char* directory, std::vector<double>& values, const char* filename, float value);
   /// fill a single vector of values from a single file given by filename (w/o .root ending).
-  void prepareByFile(const char* directory, std::vector<double>& values, const char* filename);
+  void prepareByFile(const char* directory, std::vector<double>& values, const char* filename, const char* low_tanb="");
   /// fill a single vector of values from a mlfit.root fit output file.
   void prepareByFitOutput(const char* directory, std::vector<double>& values, const char* filename, const char* treename, const char* branchname);
   /// fill a single vector of values according to 2sigma, 1sigma or median from CLs limits;
-  void prepareCLs(const char* directory, std::vector<double>& values, const char* type) {
-    prepareByFile(directory, values, std::string("higgsCombineTest.HybridNew.mH$MASS").append(type).c_str());
+  void prepareCLs(const char* directory, std::vector<double>& values, const char* type, const char* low_tanb="") {
+    prepareByFile(directory, values, std::string("higgsCombineTest.HybridNew.mH$MASS").append(type).c_str(), low_tanb);
   };
   /// fill officially approved limits for HIG-11-020 (NOTE: these are cross section limits also for MSSM)
   void prepareHIG_11_020(std::vector<double>& values, const char* type, bool xsec, double mass, bool initial);
@@ -171,6 +171,9 @@ class PlotLimits {
   void arXiv_1302_2892(TGraph* graph);
   /// fill CMS(H+)
   void arXiv_1205_5736(TGraph* graph);
+  /// fill CMS(H+), latest results
+  void HIG_12_052_lower(TGraph* graph);
+  void HIG_12_052_upper(TGraph* graph);
 
  private:
   /// output name (will be used to derived directory name in root files)
@@ -181,6 +184,8 @@ class PlotLimits {
   std::string xaxis_;
   /// string for y-axis title
   std::string yaxis_;
+  /// string for theory title used in tanb plots
+  std::string theory_;
   /// minimum on y axis for plotting
   double min_;
   /// maximum on y axis for plotting
@@ -212,6 +217,8 @@ class PlotLimits {
   std::string injectedMass_;
   /// potential extra label meant to be located below the legend (at the moment only used for limit plotting in mssm case)
   std::string extra_;
+  /// print transparent? (used for option tanb)
+  bool transparent_;
   /// indicate whether the +/- 2 sigma should be shown or not (used for option tanb)
   bool outerband_;
   /// print constraint on mA-tanb plane from Higgs boson at 125 GeV? (used for option tanb)
@@ -224,6 +231,8 @@ class PlotLimits {
   bool arXiv_1302_2892_;
   /// add CMS(H+) in MSSM mA-tanb plot
   bool arXiv_1205_5736_;
+  /// add CMS(H+) in MSSM mA-tanb plot, latest results
+  bool HIG_12_052_;
 
   /// indicate signal component for signal strength plot from 2d-scan or fit (used for option max-likelihood)
   std::string signal_;
@@ -269,6 +278,8 @@ class PlotLimits {
 #include "HiggsAnalysis/HiggsToTauTau/interface/arXiv-1302-2892.h"
 /// official limits from CMS(H+)
 #include "HiggsAnalysis/HiggsToTauTau/interface/arXiv-1205-5736.h"
+/// official limits from CMS(H+), latest results
+#include "HiggsAnalysis/HiggsToTauTau/interface/HIG-12-052.h"
 
 inline void
 PlotLimits::upperLEPLimits(TGraph* graph)

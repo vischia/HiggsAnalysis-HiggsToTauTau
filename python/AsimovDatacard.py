@@ -1,5 +1,7 @@
 import os
 import ROOT
+import random
+import glob
 
 from HiggsAnalysis.CombinedLimit.DatacardParser import *
 from HiggsAnalysis.HiggsToTauTau.DatacardAdaptor import DatacardAdaptor
@@ -82,7 +84,10 @@ class AsimovDatacard(DatacardAdaptor) :
                         hist = hist_file.Get(card.path_to_shape(bin, 'data_obs'))
                         value = hist.Integral()
                         hist_file.Close()
-                    observations.append('%.d' % round(value))
+                    if value:
+                        observations.append('%.d' % round(value))
+                    else:
+                        observations.append('0')
                 new_line = 'observation '+' '.join(observations)+'\n'
             new_file.write(new_line)
         old_file.close()
@@ -105,10 +110,15 @@ class AsimovDatacard(DatacardAdaptor) :
         ## processed files and bins
         processed_files_bins = []
         ## parse all datacards, determine signal and background
-        for name in os.listdir(dir) :
-            if not name.endswith('.txt') :
-                continue
-            file = open(dir+'/'+name, 'r')
+        ## create a list of datacards and sort them
+        dirs = glob.glob(dir+"/*.txt")
+        dirs.sort()
+        ## create a list of random numbers with one number per category
+        random.seed(self.seed)
+        catseeds = [ random.randint(1, 999999) for i in dirs]
+        ind = 0
+        for name in dirs :
+            file = open(name, 'r')
             card = parseCard(file, self.options)
             for bin in card.list_of_bins() :
                 for proc in card.list_of_procs() :
@@ -138,12 +148,13 @@ class AsimovDatacard(DatacardAdaptor) :
                                 BKG = bkg_list,
                                 SIG = sig_list.replace('$MASS',self.mass),
                                 DIR = bin,
-                                SEED = self.seed,
+                                SEED = catseeds[ind] if not int(self.seed) == -1 else -1,
                                 SCALE = self.signal_scale,
                                 IDX = '' if self.update_file else index,
                                 DATA_OBS = self.list2string(card, bin, ['data_obs']) 
                                 ))
                             index += 1
+            ind += 1
             file.close()
         ## combine all individual files into a single file for each used input rootfile. This is only necessary if the
         ## data_obs histograms have been written in separate files.

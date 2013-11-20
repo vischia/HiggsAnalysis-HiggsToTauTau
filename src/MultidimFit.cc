@@ -35,66 +35,207 @@ PlotLimits::convexGraph(TGraph* graph, double minX, double minY, double xLowerBo
   int n=graph->GetN();
   unsigned int lowerX=0, upperX=0;
   unsigned int lowerY=0, upperY=0;
+  /*
+   Add four variables to keep track of the average cross point on each axis
+   These midpoints will be need when adding extra points to the TGraph beyond
+   the axis range
+  */
+
+
+  std::vector< std::pair<double,double> > lowerX_crossing;
+  std::vector< std::pair<double,double> > lowerY_crossing;
+  std::vector< std::pair<double,double> > upperX_crossing;
+  std::vector< std::pair<double,double> > upperY_crossing;
+
   double bx[n]; double by[n];
   for(int idx=0; idx<n; ++idx){ 
     graph->GetPoint(idx, bx[idx],by[idx]);
-    if(fabs(bx[idx]-xUpperBound)<tollerance){ if(fabs(buffer[0]-by[idx])>3*tollerance){ ++upperX; buffer[0]=by[idx];} }
-    if(fabs(bx[idx]-xLowerBound)<tollerance){ if(fabs(buffer[1]-by[idx])>3*tollerance){ ++lowerX; buffer[1]=by[idx];} }
-    if(fabs(by[idx]-yUpperBound)<tollerance){ if(fabs(buffer[2]-bx[idx])>3*tollerance){ ++upperY; buffer[2]=bx[idx];} }
-    if(fabs(by[idx]-yLowerBound)<tollerance){ if(fabs(buffer[3]-bx[idx])>3*tollerance){ ++lowerY; buffer[3]=bx[idx];} }
+    //std::cout << idx << " " << bx[idx] << " " << by[idx] << std::endl;
+    if(fabs(bx[idx]-xUpperBound)<tollerance){
+      if(fabs(buffer[0]-by[idx])>3*tollerance){
+        upperX_crossing.push_back(std::make_pair(bx[idx], by[idx]));
+        ++upperX; buffer[0]=by[idx];
+      }
+    }
+    if(fabs(bx[idx]-xLowerBound)<tollerance){
+      if(fabs(buffer[1]-by[idx])>3*tollerance){
+        lowerX_crossing.push_back(std::make_pair(bx[idx], by[idx]));
+        ++lowerX; buffer[1]=by[idx];
+      }
+    }
+    if(fabs(by[idx]-yUpperBound)<tollerance){
+      if(fabs(buffer[2]-bx[idx])>3*tollerance){
+        upperY_crossing.push_back(std::make_pair(bx[idx], by[idx]));
+        ++upperY; buffer[2]=bx[idx];
+      }
+    }
+    if(fabs(by[idx]-yLowerBound)<tollerance){
+      if(fabs(buffer[3]-bx[idx])>3*tollerance){
+        lowerY_crossing.push_back(std::make_pair(bx[idx], by[idx]));
+        ++lowerY; buffer[3]=bx[idx];
+      }
+    }
   }
   // set up the convex graph that can be filled for plotting
   TGraph* convex = new TGraph(); int idx=0;
-  if(upperX>0){
-    convex->SetPoint(idx++, xUpperBound+9999., 0.);
-  }
-  if(upperY>0){
-    if(upperX>0){
-      convex->SetPoint(idx++, 0., yUpperBound+9999.);
+
+  // First check for "corner" cases
+  
+  // If we will sort points by angle, the pivot point will either be
+  // the best-fit position or one of the corners, depending on how
+  // we want the shape to close
+  double pivot_x = minX;
+  double pivot_y = minY;
+  bool pivot = false;
+  
+  if (upperX==1 && upperY==1) {
+    pivot = true;
+    if (minY > upperX_crossing[0].second && minX > upperY_crossing[0].first) {
+      convex->SetPoint(idx++, xUpperBound+tollerance, yUpperBound+tollerance);
+      pivot_x = xUpperBound;
+      pivot_y = yUpperBound;
+    } else {
+      convex->SetPoint(idx++, upperY_crossing[0].first, yUpperBound+tollerance);
+      convex->SetPoint(idx++, xLowerBound-tollerance, yUpperBound+tollerance);
+      convex->SetPoint(idx++, xLowerBound-tollerance, yLowerBound-tollerance);
+      convex->SetPoint(idx++, xUpperBound+tollerance, yLowerBound-tollerance);
+      convex->SetPoint(idx++, xUpperBound+tollerance, upperX_crossing[0].second);
+      pivot_x = xLowerBound;
+      pivot_y = yLowerBound;
     }
-    else{
-      if(upperY>1){
-	// for cases where there are two intercepts with a boundary
-	convex->SetPoint(idx++, minX, yUpperBound+tollerance);
-      }
-      else{
-	// for cases where there is only one intercept with a boundary
-	convex->SetPoint(idx++, 0., yUpperBound+9.);
-      }
+  }
+  if (upperX==1 && lowerY==1) {
+    pivot = true;
+    if (minY < upperX_crossing[0].second && minX > lowerY_crossing[0].first) {
+      convex->SetPoint(idx++, xUpperBound+tollerance, yUpperBound-tollerance);
+      pivot_x = xUpperBound;
+      pivot_y = yLowerBound;
+    } else {
+      convex->SetPoint(idx++, xLowerBound-tollerance, yLowerBound-tollerance);
+      convex->SetPoint(idx++, xLowerBound+tollerance, yUpperBound-tollerance);
+      convex->SetPoint(idx++, xLowerBound+tollerance, yUpperBound+tollerance);
+      pivot_x = xLowerBound;
+      pivot_y = yUpperBound;
     }
   }
+  if (lowerX==1 && upperY==1) {
+    pivot = true;
+    if (minY > lowerX_crossing[0].second && minX < upperY_crossing[0].first) {
+      convex->SetPoint(idx++, xLowerBound-tollerance, yUpperBound+tollerance);
+      pivot_x = xLowerBound;
+      pivot_y = yUpperBound;
+    } else {
+      convex->SetPoint(idx++, xLowerBound-tollerance, yUpperBound-tollerance);
+      convex->SetPoint(idx++, xUpperBound+tollerance, yLowerBound-tollerance);
+      convex->SetPoint(idx++, xLowerBound+tollerance, yUpperBound+tollerance);
+      pivot_x = xUpperBound;
+      pivot_y = yLowerBound;
+    }
+  }
+  if (lowerX==1 && lowerY==1) {
+    pivot = true;
+    if (minY < lowerX_crossing[0].second && minX < lowerY_crossing[0].first) {
+      convex->SetPoint(idx++, xLowerBound-tollerance, yLowerBound-tollerance);
+      pivot_x = xLowerBound;
+      pivot_y = yLowerBound;
+    } else {
+      convex->SetPoint(idx++, xLowerBound-tollerance, yUpperBound+tollerance);
+      convex->SetPoint(idx++, xUpperBound+tollerance, yLowerBound-tollerance);
+      convex->SetPoint(idx++, xLowerBound+tollerance, yUpperBound+tollerance);
+      pivot_x = xUpperBound;
+      pivot_y = yUpperBound;
+    }
+  }
+  if (lowerX==1 && upperX==1) {
+      convex->SetPoint(idx++, xLowerBound-30.*tollerance, lowerX_crossing[0].second);
+      convex->SetPoint(idx++, xLowerBound-50.*tollerance, yLowerBound-tollerance);
+      convex->SetPoint(idx++, xUpperBound+50.*tollerance, yLowerBound-tollerance);
+      convex->SetPoint(idx++, xUpperBound+30.*tollerance, upperX_crossing[0].second);
+  }
+  if (lowerY==1 && upperY==1) {
+      convex->SetPoint(idx++, yLowerBound-tollerance, xLowerBound-tollerance);
+      convex->SetPoint(idx++, yUpperBound+tollerance, xLowerBound-tollerance);
+  }
+  if (lowerX==2) {
+    pivot = true;
+    sort = false;
+    double mid = (lowerX_crossing[0].second + lowerX_crossing[1].second) / 2.0;
+    convex->SetPoint(idx++, xLowerBound-50.*tollerance, mid);
+    //convex->SetPoint(idx++, xLowerBound-tollerance, lowerX_crossing[0].second);
+    //convex->SetPoint(idx++, xLowerBound-tollerance, lowerX_crossing[1].second);
+    //pivot_x = xLowerBound;
+    //pivot_y = mid;
+  }
+  if (upperX==2) {
+    pivot = true;
+    sort = false;
+    double mid = (upperX_crossing[0].second + upperX_crossing[1].second) / 2.0;
+    convex->SetPoint(idx++, xUpperBound+50.*tollerance, mid);
+    //convex->SetPoint(idx++, xUpperBound+tollerance, upperX_crossing[0].second);
+    //convex->SetPoint(idx++, xUpperBound+tollerance, upperX_crossing[1].second);
+    //pivot_x = xUpperBound;
+    //pivot_y = mid;
+  }
+  if (lowerY==2) {
+    pivot = true;
+    sort = false;
+    double mid = (lowerY_crossing[0].first + lowerY_crossing[1].first) / 2.0;
+    convex->SetPoint(idx++, mid, yLowerBound - 50.*tollerance);
+    //convex->SetPoint(idx++, lowerY_crossing[0].first, yLowerBound - tollerance);
+    //convex->SetPoint(idx++, lowerY_crossing[1].first, yLowerBound - tollerance);
+    //pivot_x = mid;
+    //pivot_y = yLowerBound;
+  }
+  if (upperY==2) {
+    pivot = true;
+    sort = false;
+    double mid = (upperY_crossing[0].first + upperY_crossing[1].first) / 2.0;
+    convex->SetPoint(idx++,  mid, yUpperBound + 50.*tollerance);
+    //convex->SetPoint(idx++, upperY_crossing[0].first, yUpperBound + tollerance);
+    //convex->SetPoint(idx++, upperY_crossing[1].first, yUpperBound + tollerance);
+    //pivot_x = mid;
+    //pivot_y = yUpperBound;
+  }
+  if (upperX==0 && upperY==0 && lowerX==0 && lowerY==0) {
+    pivot=true;
+  }
+  
   for(int isrc=0; isrc<n; ++isrc){
     convex->SetPoint(idx++, bx[isrc], by[isrc]);
   }
-  if(lowerX>0){
-    convex->SetPoint(idx++, xLowerBound-9999., 0.);
-  }
-  if(lowerY>0){
-    if(lowerX>0){
-      std::cout << "adding far away point to close" << std::endl;
-      convex->SetPoint(idx++, 0., yLowerBound-9999.);
-    }
-    else{
-      if(lowerY>1){
-	// for cases where there are two intercepts with a boundary
-	convex->SetPoint(idx++, minX, 0.);
-      }
-      else{
-	// for cases where there is only one intercept with a boundary
-	convex->SetPoint(idx++, 0., yLowerBound-9999.);
-      }
-    }
-  }
   TGraph* sorted = convex ;
   if(sort){
-    sorted = sortedGraph(convex, minX, minY);
+    // If the graph is effectively a single line going from
+    // negative to positive we don't want to sort in the
+    // standard way, but instead just order by x-coord
+
+    if (pivot) {
+      sorted = sortedGraph(convex, pivot_x, pivot_y);
+    } else {
+      sorted->Sort();
+    }
   }
-  /*
+  if (upperX==0 && upperY==0 && lowerX==0 && lowerY==0) {
+    double x1, x2, y1, y2;
+    sorted->GetPoint(0,x1,y1);
+    sorted->GetPoint(sorted->GetN()-1, x2, y2);
+    double m = (y2-y1)/(x2-x1);
+    double c = y1-m*x1;
+    double ydiff = (yUpperBound-yLowerBound)/500.0;
+    double y_new2 = minY+ydiff;
+    double y_new1 = minY-ydiff;
+    double x_new2 = (y_new2-c)/m;
+    double x_new1 = (y_new1-c)/m; 
+    convex->SetPoint(idx++,  x_new1, y_new1);
+    convex->SetPoint(idx++,  x_new2, y_new2);
+    sorted = sortedGraph(convex, pivot_x, pivot_y);
+  }
+  
   // uncomment for debugging
   for(int idx=0; idx<sorted->GetN(); ++idx){
     std::cout << "idx:" << idx << " x:" << sorted->GetX()[idx] << " y:" << sorted->GetY()[idx] << std::endl;
   }
-  */
+  
   return sorted;
 }
 
@@ -305,7 +446,7 @@ PlotLimits::plot2DScan(TCanvas& canv, const char* directory)
     }
     std::cout << "DEBUG: L302" << std::endl;
     // add the CMS Preliminary stamp
-    CMSPrelim(dataset_.c_str(), "", 0.160, 0.835);
+    CMSPrelim(dataset_.c_str(), "", 0.135, 0.835);
     //CMSPrelim(dataset_.c_str(), "", 0.145, 0.835);
     // print 1d band
     ofstream scanOut;  

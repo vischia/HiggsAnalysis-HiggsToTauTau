@@ -53,8 +53,9 @@ PlotLimits::PlotLimits(const char* output, const edm::ParameterSet& cfg) :
     }
   }
   // common configs
+  theory_ = cfg.existsAs<std::string>("theory") ? cfg.getParameter<std::string>("theory") : std::string();
   label_ = cfg.existsAs<std::string>("outputLabel") ? cfg.getParameter<std::string>("outputLabel") : std::string();
-  verbosity_ = cfg.existsAs<unsigned int>("verbosity") ? cfg.getParameter<unsigned int>("verbosity") : 0,
+  verbosity_ = cfg.existsAs<unsigned int>("verbosity") ? cfg.getParameter<unsigned int>("verbosity") : 0;
   // specifics to plot signal strength
   signal_ = cfg.existsAs<std::string>("signal") ? cfg.getParameter<std::string>("signal") : std::string();
   // specifics to plot scan-2d
@@ -73,12 +74,14 @@ PlotLimits::PlotLimits(const char* output, const edm::ParameterSet& cfg) :
   arXiv_1204_2760_ =cfg.existsAs<bool>("arXiv_1204_2760" ) ? cfg.getParameter<bool>("arXiv_1204_2760" ) : false;
   arXiv_1302_2892_ =cfg.existsAs<bool>("arXiv_1302_2892" ) ? cfg.getParameter<bool>("arXiv_1302_2892" ) : false;
   arXiv_1205_5736_ =cfg.existsAs<bool>("arXiv_1205_5736" ) ? cfg.getParameter<bool>("arXiv_1205_5736" ) : false;
+  HIG_12_052_      =cfg.existsAs<bool>("HIG_12_052"      ) ? cfg.getParameter<bool>("HIG_12_052"      ) : false;
   higgs125_ =cfg.existsAs<bool>("higgs125" ) ? cfg.getParameter<bool>("higgs125" ) : false;
   outerband_=cfg.existsAs<bool>("outerband") ? cfg.getParameter<bool>("outerband") : false;
+  transparent_=cfg.existsAs<bool>("transparent") ? cfg.getParameter<bool>("transparent") : false;
 }
 
 TGraph*
-PlotLimits::fillCentral(const char* directory, TGraph* plot, const char* filename)
+PlotLimits::fillCentral(const char* directory, TGraph* plot, const char* filename, const char* low_tanb /*=""*/)
 {
   std::vector<double> central;
   // fill pre-defined values from previous results
@@ -146,20 +149,49 @@ PlotLimits::fillCentral(const char* directory, TGraph* plot, const char* filenam
       prepareByFitOutput(directory, central, "out/mlfit", "tree_fit_sb", "nll_min");
     }
     else{
-      prepareByFile(directory, central, filename);
+      if(std::string(low_tanb)==std::string("low")){
+	prepareByFile(directory, central, filename, "low");
+      }
+      else{ 
+	prepareByFile(directory, central, filename);
+      }
     }
   }
+  bool first_low=true;
   for(unsigned int imass=0, ipoint=0; imass<bins_.size(); ++imass){
     if(valid_[imass] && std::string(filename).find("HIG")==std::string::npos){
-      plot->SetPoint(ipoint++, bins_[imass], central[imass]);
+      if(mssm_){
+	// fill the upper limit contour for MSSM. The lowest value in the MSSM tanb scan is 0.5. If
+	// central value is 0.5 for the upper limit this mean that there is now upper bound found. 
+	// For such cases it is necessary to consider the first and last point before and after the 
+	// uppler limit exclusion starts to be able to close the contour for plotting. 
+	if(!first_low){
+	  if((central[imass]==0.5 && central[imass-1]>0.5) || central[imass]!=0.5) {
+	    plot->SetPoint(ipoint++, bins_[imass], central[imass]);
+	    //std::cout<< "lastlow" << central[imass] << " " << bins_[imass] << std::endl;
+	  }
+	}
+	if(first_low){
+	  if((central[imass]==0.5 && central[imass+1]>0.5) || central[imass]!=0.5) {
+	    plot->SetPoint(ipoint++, bins_[imass], central[imass]); first_low=false;
+	    //std::cout<< "firstlow" << central[imass] << " "  << central[imass+1] << " "<< bins_[imass] << std::endl;
+	  }
+	}
+      }
+      else {
+	plot->SetPoint(ipoint++, bins_[imass], central[imass]);
+      }
       if(verbosity_>1){ std::cout << "INFO: central [" << bins_[imass] << "] = " << central[imass] << "[" << (valid_[imass] ? "OK]" : "FAILED]") << std::endl; }
     }
     else{
       if(valid_[imass]){
 	for(unsigned int jmass=0; jmass<masses_.size(); ++jmass){
 	  if(masses_[jmass]==bins_[imass]){
-	    plot->SetPoint(ipoint++, masses_[jmass], central[jmass]);
-	    if(verbosity_>1){ std::cout << "INFO: central [" << masses_[jmass] << "] = " << central[jmass] << "[" << (valid_[imass] ? "OK]" : "FAILED]") << std::endl; }
+	    plot->SetPoint(ipoint++, masses_[jmass], central[jmass]);  
+	    if(verbosity_>1){ 
+	      std::cout << "INFO: central [" << masses_[jmass] << "] = " << central[jmass] << "[" << (valid_[imass] ? "OK]" : "FAILED]") << std::endl; 
+	      std::cout << plot->GetN() << " " << plot->GetX()[imass] << " " << plot->GetY()[imass] << std::endl;
+	    }
 	    break;
 	  }
 	}
@@ -169,7 +201,7 @@ PlotLimits::fillCentral(const char* directory, TGraph* plot, const char* filenam
   return plot;
 }
 TGraphAsymmErrors*
-PlotLimits::fillBand(const char* directory, TGraphAsymmErrors* plot, const char* method, bool innerBand)
+PlotLimits::fillBand(const char* directory, TGraphAsymmErrors* plot, const char* method, bool innerBand, const char* low_tanb /*=""*/)
 {
   std::vector<double> upper, lower, expected;
 
@@ -221,9 +253,16 @@ PlotLimits::fillBand(const char* directory, TGraphAsymmErrors* plot, const char*
       prepareByToy(directory, lower   , innerBand ? "-1SIGMA" : "-2SIGMA");
     }
     else if(std::string(method) == std::string("CLs")){
-      prepareCLs(directory, expected, ".quant0.500");
-      prepareCLs(directory, upper   , innerBand ? ".quant0.840" : ".quant0.975");
-      prepareCLs(directory, lower   , innerBand ? ".quant0.160" : ".quant0.027");
+      if(std::string(low_tanb)==std::string("low")){
+	prepareCLs(directory, expected, ".quant0.500", "low");
+	prepareCLs(directory, upper   , innerBand ? ".quant0.840" : ".quant0.975", "low");
+	prepareCLs(directory, lower   , innerBand ? ".quant0.160" : ".quant0.027", "low");
+      }
+      else{
+	prepareCLs(directory, expected, ".quant0.500");
+	prepareCLs(directory, upper   , innerBand ? ".quant0.840" : ".quant0.975");
+	prepareCLs(directory, lower   , innerBand ? ".quant0.160" : ".quant0.027");
+      }
     }
     else if(std::string(method).find("Asymptotic") != std::string::npos){
       prepareByValue(directory, expected, method, 0.50);

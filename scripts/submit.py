@@ -72,13 +72,17 @@ parser.add_option_group(dgroup)
 ##
 ## LIKELIHOOD-SCAN
 ##
-egroup = OptionGroup(parser, "LIKELIHOOD-SCAN OPTIONS", "These are the command line options that can be used to configure the submission of the likelihood scan. The number of scan points the minimum and the maximum of the scan can be given. Note that the likelihood scan is only possible for the SM case with all signal contributions as single POI. At the moment there is no job splitting implemented, yet.")
+egroup = OptionGroup(parser, "LIKELIHOOD-SCAN AND MAX-LIKELIHOOD FIT OPTIONS", "These are the command line options that can be used to configure the submission of the likelihood scan. The number of scan points the minimum and the maximum of the scan can be given. Note that the likelihood scan is only possible for the SM case with all signal contributions as single POI. At the moment there is no job splitting implemented, yet.")
 egroup.add_option("--points", dest="points", default="100", type="string",
                   help="Number of scan points for the likelihood scan. [Default: 100]")
 egroup.add_option("--rMin", dest="rMin", default="-2.0", type="string",
                   help="Minimum of the scan. [Default: -2.0]")
 egroup.add_option("--rMax", dest="rMax", default="+4.0", type="string",
-                  help="Maximum of the scan. [Default: -4.0]")
+                  help="Maximum of the scan. [Default: +4.0]")
+egroup.add_option("--stable", dest="stable", default=False, action="store_true",
+                  help="Specify this option to run the max-likelihood fit calculation with option --stable. [Default: False]")
+egroup.add_option("--stable-old", dest="stable_old", default=False, action="store_true",
+                  help="Specify this option to run the max-likelihood fit calculation with option --stable-old. [Default: False]")
 parser.add_option_group(egroup)
 ##
 ## MULTIDIM-FIT
@@ -95,13 +99,15 @@ fgroup.add_option("--jobs", dest="jobs", default="100", type="string",
                   help="Set the number crab jobs that you want to submit to calculate the toy based expected significance. [Default: 100]")
 fgroup.add_option("--seed", dest="seed", default="", type="string",
                   help="Per default toys are run with a random seed. In case you want to run on pseudo toys with a well defined seed add the seed here. If \"\" this option will have no effect. [Default: \"\"]")
+fgroup.add_option("--uncapped", dest="uncapped", default=False, action="store_true",
+                  help="Use uncapped option, a la ATLAS, to allow for p-values larger than 0.5 and negatove significances in case of deficits in the data. [Default: False]")
 fgroup.add_option("--grid", dest="grid", default=False, action="store_true",
                   help="Use this option if you want to submit your jobs to the grid. Otherwise they will be submitted to lxb (lxq). [Default: False]")
 parser.add_option_group(fgroup)
 ##
 ## INJECTED OPTIONS
 ##
-ggroup = OptionGroup(parser, "INJECTED OPTIONS", "These are the command line options that can be used to configure lxb (lxq) batch job submission for 95% CL upper asymptotic CLs limits, (frequentist) significance or p-value calculations with a SM signal injected via the script lxb-injected.py, which uses the script limit.py. The expected limit with a SM signal injected is obtained from a large sample of toys. For each toy a pseudo data set is prepared and the observed limit is calculated. After the toys have been produced you can collect the output using the script limit.py with option --injected. The expected limit and the uncertainties are obtained from the median and the quantiles of the collected toys. The number of toys (--toys) and the batch queue options (--queue) can be configured using the options described in section BATCH OPTIONS of this parameter description. The option --bunch-masses as described below can be used to define a maximal number of masses that will be bunched into a single job before a new job is created. The option --nuisances can be used to pass a pre-defined set of nuisance parameters to limit.py that will be used instead of determining the central values of the nuisances by the prefit for each toy on its own.")
+ggroup = OptionGroup(parser, "INJECTED OPTIONS", "These are the command line options that can be used to configure lxb (lxq) batch job submission for 95% CL upper asymptotic CLs limits, (frequentist) significance or p-value calculations with a SM signal injected via the script lxb-injected.py, which uses the script limit.py. The expected limit with a SM signal injected is obtained from a large sample of toys. For each toy a pseudo data set is prepared and the observed limit/significance/p-value is calculated. After the toys have been produced you can collect the output using the script limit.py with option --injected. You can also use this script to do this using the option --collect-injected-toys, which will collect the injected toys and runthe observe limit on data. The expected limit and the uncertainties are obtained from the median and the quantiles of the collected toys. The number of toys (--toys) and the batch queue options (--queue) can be configured using the options described in section BATCH OPTIONS of this parameter description. The option --bunch-masses as described below can be used to define a maximal number of masses that will be bunched into a single job before a new job is created. The option --external-pulls can be used to pass a pre-defined set of nuisance parameters to limit.py that will be used instead of determining the central values of the nuisances by the prefit for each toy on its own.")
 ggroup.add_option("--injected-method", dest="injected_method", default="--asymptotic", type="choice", choices=["--asymptotic", "--significance-frequentist", "--pvalue-frequentist","--max-likelihood"],
                   help="Indicate here the method that you want to use the injected signal toys for. Available choices are '--asymptotic', '--significance-frequentist','--pvalue-frequentist' and '--max-likelihood' [Default: --asymptotic]")
 ggroup.add_option("--bunch-masses", dest="nmasses", default="10", type="string",
@@ -110,12 +116,10 @@ ggroup.add_option("--external-pulls", dest="nuisances", default="", type="string
                   help="Specify the full path to a root output file of limit.py with option --max-likelihood (e.g. mlfit.root) to enforce the use of pre-calculated central values of the nuisance parmeters involved in this fit. It is in the responsibility of the user that the nuisance parameter names in the output file and the nuisance parameter names in the current workspace fit together. The limit will be run w/ option --no-prefit. For more details have a look to the description of option --external-pulls of the script limit.py. [Default: \"\"]")
 ggroup.add_option("--injected-mass", dest="injected_mass", type="string", default="125",
                   help="Mass of the signal that should be injected into the background only hypothesis from simulation. [Default: 125]")
-ggroup.add_option("--preinject", dest="preinject", default=False,action="store_true",
-                  help=".... [Default: False]")
 ggroup.add_option("--SplusB", dest="signal_plus_BG", default=True, action="store_true",
                   help="When using options --external-pulls, use the fit results with signal plus background. If 'False' the fit result of the background only hypothesis is used. [Default: False]")
 ggroup.add_option("--collect-injected-toys", dest="calculate_injected", default=False, action="store_true",
-                  help="Collect toys and calculate observed limit using lxb (lxq). To run with this options the toys have to be produced beforehand. [Default: False]")
+                  help="Collect toys and calculate observed limit/significance/p-value using lxb (lxq). To run with this options the toys have to be produced beforehand. [Default: False]")
 parser.add_option_group(ggroup)
 ##
 ## TANB+
@@ -285,19 +289,25 @@ if options.optGoodnessOfFit :
 ## MAX-LIKELIHOOD
 ##
 if options.optMLFit :
+    stable = ''
+    if options.stable :
+        stable = '--stable'
+    elif options.stable_old :
+        stable = '--stable-old'
     if options.interactive :
         for dir in args :
             mass = get_mass(dir)
             if mass == 'common' :
                 continue
             if options.printOnly :
-                print"limit.py --max-likelihood --stable-old --rMin -5 --rMax 5 {DIR}".format(DIR=dir)
+                print"limit.py --max-likelihood {STABLE} --rMin {RMIN} --rMax {RMAX} {DIR}".format(DIR=dir, STABLE=stable, RMIN=options.rMin, RMAX=options.rMax)
             else :
-                os.system("limit.py --max-likelihood --stable-old --rMin -5 --rMax 5 {USER} {DIR}".format(USER=options.opt, DIR=dir))
+                os.system("limit.py --max-likelihood {STABLE} --rMin {RMIN} --rMax {RMAX} {USER} {DIR}".format(
+                    STABLE=stable, RMIN=options.rMin, RMAX=options.rMax, USER=options.opt, DIR=dir))
     else :
         ## directories and mases per directory
         struct = directories(args)
-        lxb_submit(struct[0], struct[1], "--max-likelihood", "--stable-old --rMin -5 --rMax 5 {USER}".format(USER=options.opt))
+        lxb_submit(struct[0], struct[1], "--max-likelihood", "{STABLE} --rMin {RMIN} --rMax {RMAX} {USER}".format(STABLE=stable, RMIN=options.rMin, RMAX=options.rMax, USER=options.opt))
 ##
 ## LIKELIHOOD-SCAN
 ##
@@ -337,9 +347,12 @@ if options.optMDFit :
         head = prefix[:prefix.rfind('/')]
         prefix = prefix[head.rfind('/')+1:].replace('/', '-')
         ## define command line, model and model options
-        cmd   = ""
-        model = ""
-        opts  = ""
+        cmd    = ""
+        model  = ""
+        opts   = ""
+        stable = ""
+        if options.stable :
+          stable = ' --limit-options=\"--userOpt=\\\" --minimizerStrategy=0 --minimizerTolerance=0.1 --cminPreScan --cminFallbackAlgo \\\\\\\"Minuit2,0:1.0\\\\\\\" --cminFallbackAlgo \\\\\\\"Minuit2,0:10.0\\\\\\\" --cminFallbackAlgo \\\\\\\"Minuit2,0:50.0\\\\\\\"\\\"\"'
         ### MSSM Heavy Charged Higgs: H+->tb vs H+->taunu
         # First try without physics model options
         if "HTB-TBH" in options.fitModel :
@@ -371,18 +384,18 @@ if options.optMDFit :
             opts  = "--physics-model-options 'clRange=0:{CL};cqRange=0:{CQ}'".format(CL=bounds["cl-cq",mass][0], CQ=bounds["cl-cq",mass][1])
         ## SM ggH versus qqH (this configuration is optimized for mH=125)
         elif "ggH-qqH" in options.fitModel :
-            cmd   = "lxb-multidim-fit.py --name {PRE}-GGH-QQH-{MASS} --njob 400 --npoints 16".format(PRE=prefix, MASS=mass)
+            cmd   = "lxb-multidim-fit.py --name {PRE}-GGH-QQH-{MASS} --njob 160 --npoints 40".format(PRE=prefix, MASS=mass)
             model = "--physics-model 'ggH-qqH=HiggsAnalysis.CombinedLimit.PhysicsModel:floatingXSHiggs'"
             opts  = "--physics-model-options 'modes=ggH,qqH ggHRange=0:4 qqHRange=0:4'"
         ## SM rV versus rF (this configuration is optimized for mH=125)
         elif "rV-rF" in options.fitModel :
-            cmd   = "lxb-multidim-fit.py --name {PRE}-RV-RF-{MASS} --njob 400 --npoints 16".format(PRE=prefix, MASS=mass)
+            cmd   = "lxb-multidim-fit.py --name {PRE}-RV-RF-{MASS} --njob 160 --npoints 40".format(PRE=prefix, MASS=mass)
             model = "--physics-model 'rV-rF=HiggsAnalysis.CombinedLimit.PhysicsModel:rVrFXSHiggs'"
             #opts  = "--physics-model-options 'rVRange=0:5 rFRange=0:4'"
             opts  = "--physics-model-options 'rVRange=-3:5 rFRange=-2:4'"
         ## SM cV versus cF (this configuration is optimized for mH=125)
         elif "cV-cF" in options.fitModel :
-            cmd   = "lxb-multidim-fit.py --name {PRE}-CV-CF-{MASS} --njob 300 --npoints 12".format(PRE=prefix, MASS=mass)
+            cmd   = "lxb-multidim-fit.py --name {PRE}-CV-CF-{MASS} --njob 120 --npoints 30".format(PRE=prefix, MASS=mass)
             model = "--physics-model 'cV-cF=HiggsAnalysis.CombinedLimit.HiggsCouplings:cVcF'"
             opts  = "--physics-model-options 'cVRange=0:3 cFRange=0:2'"            
         ## add lxq compliance
@@ -394,11 +407,11 @@ if options.optMDFit :
         ## add fastScan option
         fastScan = " --limit-options '--fastScan'" if options.fastScan else ""
         if options.printOnly :
-            print "{CMD} {MODEL} {OPTS} {FAST} {QUEUE} {SYS} {USER} {DIR}".format(
-                CMD=cmd, MODEL=model, OPTS=opts, FAST=fastScan, QUEUE=queue, SYS=sys, USER=options.opt, DIR=dir)
+          print "{CMD} {MODEL} {OPTS} {FAST} {QUEUE} {SYS} {USER} {STABLE} {DIR}".format(
+                CMD=cmd, MODEL=model, OPTS=opts, FAST=fastScan, QUEUE=queue, SYS=sys, USER=options.opt, STABLE=stable, DIR=dir)
         else :
-            os.system("{CMD} {MODEL} {OPTS} {FAST} {QUEUE} {SYS} {USER} {DIR}".format(
-                CMD=cmd, MODEL=model, OPTS=opts, FAST=fastScan, QUEUE=queue, SYS=sys, USER=options.opt, DIR=dir))
+            os.system("{CMD} {MODEL} {OPTS} {FAST} {QUEUE} {SYS} {USER} {STABLE} {DIR}".format(
+                CMD=cmd, MODEL=model, OPTS=opts, FAST=fastScan, QUEUE=queue, SYS=sys, USER=options.opt, STABLE=stable, DIR=dir))
 ##
 ## SIGNIFICANCE
 ##
@@ -420,19 +433,22 @@ if options.optSigFreq or options.optPValue :
         method = '--significance-frequentist'
     elif options.optPValue :
         method = '--pvalue'
+    uncapped = ''
+    if options.uncapped :
+        uncapped = '--uncapped'
     if options.interactive :
         for dir in args :
             mass = get_mass(dir)
             if mass == 'common' :
                 continue
             if options.printOnly :
-                print "limit.py {METHOD} {USER} {DIR}".format(METHOD=method, USER=options.opt, DIR=dir)
+                print "limit.py {METHOD} {UNCAPPED} {USER} {DIR}".format(METHOD=method, UNCAPPED=uncapped, USER=options.opt, DIR=dir)
             else :
-                os.system("limit.py {METHOD} {USER} {DIR}".format(METHOD=method, USER=options.opt, DIR=dir))
+                os.system("limit.py {METHOD} {UNCAPPED} {USER} {DIR}".format(METHOD=method, UNCAPPED=uncapped, USER=options.opt, DIR=dir))
     else :
         ## directories and mases per directory
         struct = directories(args)
-        lxb_submit(struct[0], struct[1], method, "{USER}".format(USER=options.opt))
+        lxb_submit(struct[0], struct[1], method, "{UNCAPPED} {USER}".format(UNCAPPED=uncapped, USER=options.opt))
 ##
 ## ASYMPTOTIC (with dedicated models)
 ##
@@ -492,19 +508,21 @@ if options.optInject :
                 tail = dir[dir.rstrip('/').rfind('/')+1:]
                 if is_number(tail) :
                     dirs[path].append(tail)
+    if options.injected_method == "--max-likelihood" :
+        folder_extension = "-mlfit"
+    elif options.injected_method == "--asymptotic" :
+        folder_extension = "-limit"
+    elif options.injected_method == "--significance-frequentist" :
+        folder_extension = "-sig"
+    elif options.injected_method == "--pvalue-frequentist" :
+        folder_extension = "-pval"
     if not options.calculate_injected :
-        ## prepare options
         opts = options.opt
-        if options.injected_method == "--max-likelihood" :
-            folder_extension = "-mlfit"
-        elif options.injected_method == "--asymptotic" :
-            folder_extension = "-limit"
-        elif options.injected_method == "--significance-frequentist" :
-            folder_extension = "-sig"
-        elif options.injected_method == "--pvalue-frequentist" :
-            folder_extension = "-pval"
+        ## prepare options
         if not options.injected_method == "--max-likelihood" :
             opts+=" --observedOnly"
+        else:
+            opts+=" --mass-scan"
         if not options.nuisances == "" :
             opts+=" --no-prefit --external-pulls \"{PATH}\" --signal-plus-background {SPLUSB}".format(PATH=options.nuisances, SPLUSB=options.signal_plus_BG)
         method = options.injected_method
@@ -518,6 +536,7 @@ if options.optInject :
                 os.system("lxb-injected.py --name {NAME} --method {METHOD} --input {PATH} {LXQ} {CONDOR} --batch-options \"{SUB}\" --toys {NJOB} --mass-points-per-job {NMASSES} --limit-options \"{OPTS}\" --injected-mass {INJECTEDMASS} {MASSES}".format(
                     NAME=jobname, METHOD=options.injected_method, PATH=path, SUB=options.queue, NJOB=options.toys, NMASSES=options.nmasses, OPTS=opts, INJECTEDMASS=options.injected_mass, MASSES=' '.join(dirs[path]), LXQ="--lxq" if options.lxq else "", CONDOR="--condor" if options.condor else ""))
     else :
+        opts = options.opt
         ## directories and masses per directory
         print "Collecting results"
         struct = directories(args)
@@ -532,6 +551,13 @@ if options.optInject :
                     os.system("limit.py --max-likelihood --collect-injected-toys {DIR}/{MASS}".format(DIR=dir, MASS=mass))
             ## finally obtain the result on data 
             lxb_submit(struct[0], struct[1], "--max-likelihood", "{USER}".format(USER=options.opt))
+            ## obtain the expected results using an asimov dataset
+            opts+=" --mass-scan"
+            for path in paths:
+                jobname = "injected-"+path[path.rstrip('/').rfind('/')+1:]+folder_extension+'-exp'
+                os.system("lxb-injected.py --name {NAME} --method {METHOD} --expected --input {PATH} {LXQ} {CONDOR} --batch-options \"{SUB}\" --toys {NJOB} --mass-points-per-job {NMASSES} --limit-options \"{OPTS}\" --injected-mass {INJECTEDMASS} {MASSES}".format(
+                    NAME=jobname, METHOD=options.injected_method, PATH=path, SUB=options.queue, NJOB='1', NMASSES=options.nmasses, OPTS=opts, INJECTEDMASS=options.injected_mass, MASSES=' '.join(dirs[path]), LXQ="--lxq" if options.lxq else "", CONDOR="--condor" if options.condor else ""))
+           
         else :
             lxb_submit(struct[0], struct[1], "{METHOD} --collect-injected-toys".format(METHOD=options.injected_method), "{USER}".format(USER=options.opt))
 ##
@@ -605,7 +631,7 @@ if options.optTanb or options.optTanbPlus :
                     ,"{CMD} -n  3 --min  9.0  --max 15.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  3 --min 20.0  --max 30.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     #,"{CMD} -n  2 --min 35.0  --max 40.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
-                    #,"{CMD} -n  3 --min 50.0  --max 70.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
+                    #,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                 ]
             if len(subvec(args, 250, 299))>0 :
                 dirs = vec2str(subvec(args, 250,  299))
@@ -613,7 +639,7 @@ if options.optTanb or options.optTanbPlus :
                      "{CMD} -n  2 --min  0.5  --max  1.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  5 --min  3.0  --max 15.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  5 --min 20.0  --max 40.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
-                    #,"{CMD} -n  3 --min 50.0  --max 70.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
+                    #,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                 ]                
             if len(subvec(args, 300, 399))>0 :
                 dirs = vec2str(subvec(args, 300,  399))
@@ -621,7 +647,7 @@ if options.optTanb or options.optTanbPlus :
                      "{CMD} -n  3 --min  2.0  --max 10.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  5 --min 13.0  --max 25.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  3 --min 30.0  --max 40.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
-                    ,"{CMD} -n  3 --min 50.0  --max 70.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
+                    ,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                 ]                                
             if len(subvec(args, 400, 599))>0 :
                 dirs = vec2str(subvec(args, 400,  599))
@@ -629,7 +655,7 @@ if options.optTanb or options.optTanbPlus :
                      "{CMD} -n  3 --min  2.0  --max 10.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  2 --min 15.0  --max 20.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  5 --min 25.0  --max 45.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
-                    ,"{CMD} -n  3 --min 50.0  --max 70.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
+                    ,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                 ]                                
             if len(subvec(args, 600, 1000))>0 :
                 dirs = vec2str(subvec(args, 600, 1000))
@@ -637,7 +663,7 @@ if options.optTanb or options.optTanbPlus :
                      "{CMD} -n  3 --min  2.0  --max 10.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  2 --min 15.0  --max 20.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  5 --min 30.0  --max 50.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
-                    ,"{CMD} -n  4 --min 55.0  --max 70.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
+                    ,"{CMD} -n  2 --min 55.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                 ]                                                
             for point in grid :
                 if options.printOnly :
