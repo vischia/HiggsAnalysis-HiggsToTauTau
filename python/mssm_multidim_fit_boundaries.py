@@ -2,15 +2,15 @@ mssm_multidim_fit_boundaries = {
     ## key=mass   first value=HTB; second value=TBH 
 
     # combined
-    ("HTB-TBH",  "180")  : (5.,10.),
+    ("HTB-TBH",  "180")  : (3.,5.),
     ("HTB-TBH",  "190")  : (5.,10.),
     ("HTB-TBH",  "200")  : (5.,10.),
     ("HTB-TBH",  "220")  : (5.,10.),
     ("HTB-TBH",  "240")  : (5.,10.),
-    ("HTB-TBH",  "250")  : (5.,10.),
+    ("HTB-TBH",  "250")  : (0.1,5.),
     ("HTB-TBH",  "260")  : (5.,10.),
     ("HTB-TBH",  "280")  : (5.,10.),
-    ("HTB-TBH",  "300")  : (5.,10.),
+    ("HTB-TBH",  "300")  : (2.,10.),
     ("HTB-TBH",  "350")  : (2.00, 1000.00),
     ("HTB-TBH",  "400")  : (2.00, 1000.00),
     ("HTB-TBH",  "500")  : (2.00, 1000.00),
