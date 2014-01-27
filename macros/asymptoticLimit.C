@@ -17,7 +17,7 @@
 #include "TCanvas.h"
 #include "TSpline.h"
 
-#include "HiggsAnalysis/HiggsToTauTau/macros/Utils.h"
+#include "/afs/cern.ch/work/v/vischia/private/code/tau_dilepton/CMSSW_6_1_1/src/HiggsAnalysis/HiggsToTauTau/macros/Utils.h"
 
 
 /// typedef CrossPoint to a bin plus flag on falling or rising intercept, true for falling
@@ -96,10 +96,13 @@ void fillTree(TTree*& tree, TGraph*& graph, double& limit, double& lowlimit, uns
   double tanb_help=-99;
   unsigned int ibin=0;
   // fill graph with scanned points
+  cout << "now looping on  map" << endl;
   for(std::map<double, std::string>::const_iterator tanb = tanb_values.begin(); tanb!=tanb_values.end(); ++tanb){
     value = singlePointLimit(tanb->second, tanb->first, itype, verbosity);
+    cout << "value = " << value << " = singlePointLimit(" << tanb->second <<", " << tanb->first << ", " << itype << ", " << verbosity << ");" << endl;
     if( value>0 ){
       graph->SetPoint(ibin++, tanb->first, value); 
+      cout << "graph->SetPoint("<< ibin++ <<", " << tanb->first<<",  "<< value << ");"<< endl; 
     }
     tanb_help=tanb->first;
   }
@@ -205,10 +208,16 @@ void fillTree(TTree*& tree, TGraph*& graph, double& limit, double& lowlimit, uns
 	tree->Fill();
       }
   }
+  cout << "Evaluated crossings. Now plotting" << endl;
   //if( verbosity>0 ){
     std::string monitor = std::string("SCAN-")+limitType(itype);
     TCanvas* canv = new TCanvas(monitor.c_str(), monitor.c_str(), 600, 600);
+    cout << "Canva created. Now creating frame taking values from graph" << endl;
+    cout << "Graph getx " << graph->GetX()[0] << endl;
+    cout << "Graph getn " << graph->GetN() << endl;
+    cout << "Graph getxn " << graph->GetX()[graph->GetN()-1];
     TH1F* frame = canv->DrawFrame(graph->GetX()[0]-0.1, 0., graph->GetX()[graph->GetN()-1]+0.1, 10.);
+    cout << "Frame created, taking values from graph" << endl;
     canv->SetGridx(1); canv->SetGridy(1); canv->cd(); 
     graph->SetMarkerStyle(20.); 
     graph->SetMarkerColor(kBlack); 
