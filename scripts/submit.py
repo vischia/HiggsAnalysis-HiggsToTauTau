@@ -465,14 +465,15 @@ if options.optAsym :
     elif "bbH" in options.fitModel :
         model = "--physics-model 'tmp=HiggsAnalysis.HiggsToTauTau.PhysicsBSMModel:floatingMSSMXSHiggs'"
         opts  = "--physics-model-options 'modes=bbH;bbHRange=0:BBH-BOUND'"
-
     ## MSSM ggH while bbH is profiled (GGH-BOUND will be resolved in limit.create_card_workspace_with_physics_model)
     if "HTB" in options.fitModel :
-        model = "--physics-model 'tmpHiggsAnalysis.CombinedLimit.SimpleHeavyChHiggsModel:heavych'"
+        model = "--physics-model 'tmp=HiggsAnalysis.HiggsToTauTau.PhysicsBSMModel:floatingChargedHiggs'"
+        #        model = "--physics-model 'tmp=HiggsAnalysis.CombinedLimit.SimpleHeavyChHiggsModel:heavych'"
         opts  = "--physics-model-options 'modes=HTB;HTBRange=0:HTB-BOUND'"
     ## MSSM bbH while ggH is profiled (BBH-BOUND will be resolved in limit.create_card_workspace_with_physics_model)
     elif "TBH" in options.fitModel :
-        model = "--physics-model 'tmpHiggsAnalysis.CombinedLimit.SimpleHeavyChHiggsModel:heavych'"
+        model = "--physics-model 'tmp=HiggsAnalysis.HiggsToTauTau.PhysicsBSMModel:floatingChargedHiggs'"
+        #        model = "--physics-model 'tmp=HiggsAnalysis.CombinedLimit.SimpleHeavyChHiggsModel:heavych'"
         opts  = "--physics-model-options 'modes=TBH;TBHRange=0:TBH-BOUND'"
     ## prepare calculation
     if options.interactive :
@@ -624,24 +625,27 @@ if options.optTanb or options.optTanbPlus :
             grid= []
             sub = "--interactive" if options.optTanbPlus else "--toysH 100 -t 200 -j 100 --random --server "
             if len(subvec(args,  90, 249))>0 :
+                print "First case YAYA"
                 dirs = vec2str(subvec(args,  90,  249))
                 grid = [
                      "{CMD} -n  6 --min  0.5  --max  1.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  4 --min  2.0  --max  8.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs) 
                     ,"{CMD} -n  3 --min  9.0  --max 15.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  3 --min 20.0  --max 30.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
-                    #,"{CMD} -n  2 --min 35.0  --max 40.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
-                    #,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
+                    ,"{CMD} -n  2 --min 35.0  --max 40.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
+                    ,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                 ]
             if len(subvec(args, 250, 299))>0 :
+                print "Second case YAYA"
                 dirs = vec2str(subvec(args, 250,  299))
                 grid = [
                      "{CMD} -n  2 --min  0.5  --max  1.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  5 --min  3.0  --max 15.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                     ,"{CMD} -n  5 --min 20.0  --max 40.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
-                    #,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
+                    ,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                 ]                
             if len(subvec(args, 300, 399))>0 :
+                print "Third case YAYA"
                 dirs = vec2str(subvec(args, 300,  399))
                 grid = [
                      "{CMD} -n  3 --min  2.0  --max 10.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
@@ -650,6 +654,7 @@ if options.optTanb or options.optTanbPlus :
                     ,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                 ]                                
             if len(subvec(args, 400, 599))>0 :
+                print "Fourth case YAYA"
                 dirs = vec2str(subvec(args, 400,  599))
                 grid = [
                      "{CMD} -n  3 --min  2.0  --max 10.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
@@ -658,6 +663,7 @@ if options.optTanb or options.optTanbPlus :
                     ,"{CMD} -n  2 --min 50.0  --max 60.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
                 ]                                
             if len(subvec(args, 600, 1000))>0 :
+                print "Fifth case YAYA"
                 dirs = vec2str(subvec(args, 600, 1000))
                 grid = [
                      "{CMD} -n  3 --min  2.0  --max 10.0 {SUB} {OPTS} {USER} {DIRS}".format(CMD=cmd, SUB=sub, OPTS=options.opt, USER=options.opt, DIRS=dirs)
