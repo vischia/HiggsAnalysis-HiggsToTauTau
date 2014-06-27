@@ -52,6 +52,7 @@ PlotLimits::plotTanb(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErr
 
   // create plain background
   TGraphAsymmErrors* plain=0;
+  std::cout << "[Tanb.cc] Plain background created for limit. Now computing in case of observed" << std::endl;
   if(observed){
     plain=new TGraphAsymmErrors();
     plain->SetPoint(0, observed->GetX()[0], 100.);
@@ -70,15 +71,20 @@ PlotLimits::plotTanb(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErr
     plain->SetPointEYlow (observed->GetN(), 0);
     plain->SetPointEYhigh(observed->GetN(), 100); 
   }
+  std::cout << "[Tanb.cc] Plain background computed for limit in case of observed" << std::endl;
 
   TGraphAsymmErrors* plain_low=0;
+  std::cout << "[Tanb.cc] Plain background created for lowlimit. Now computing in case of observed" << std::endl;
   if(observed_low){
     plain_low=new TGraphAsymmErrors();
+    std::cout << "[Tanb.cc] observed_low->GetN()=" << observed_low->GetN() << std::endl;
     plain_low->SetPoint(0, observed_low->GetX()[0], 0.5);
+    std::cout << "[Tanb.cc] Point has been set. " << std::endl;
     plain_low->SetPointEYlow (0, 0);
     plain_low->SetPointEYhigh(0, 0); 
-    //std::cout << observed_low->GetX()[0] << " " << observed_low->GetN() << std::endl;
+    std::cout << "[Tanb.cc] ObservedLow->GetX()[0] = " << observed_low->GetX()[0] << ", observed_low->GetN()=" << observed_low->GetN() << std::endl;
     for(int imass=0, ipoint=0; imass<observed_low->GetN(); ++imass){
+      std::cout << "[Tanb.cc] Entered loop " << std::endl;
       if(valid_[imass]){
 	plain_low->SetPoint(ipoint+1, observed_low->GetX()[ipoint], observed_low->GetY()[ipoint]); 
 	plain_low->SetPointEYlow (ipoint+1, observed_low->GetY()[ipoint]-0.5);
@@ -92,6 +98,7 @@ PlotLimits::plotTanb(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErr
     plain_low->SetPointEYhigh(observed_low->GetN(), 0); 
     //std::cout << observed_low->GetX()[observed_low->GetN()-1] << std::endl;
   }
+  std::cout << "[Tanb.cc] Plain background computed for lowlimit in case of observed" << std::endl;
 
   // create LEP exclusion plot
   TGraph* upperLEP = new TGraph();
@@ -127,6 +134,9 @@ PlotLimits::plotTanb(TCanvas& canv, TGraphAsymmErrors* innerBand, TGraphAsymmErr
   /// setup the CMS Preliminary
   CMSPrelim(dataset_.c_str(), "", 0.145, 0.835);
   // write results to files
+  if(c_){
+    canv.Print(std::string(output_).append("_").append(extralabel_).append(label_).append(".C").c_str());
+  }
   if(png_){
     canv.Print(std::string(output_).append("_").append(extralabel_).append(label_).append(".png").c_str());
   }

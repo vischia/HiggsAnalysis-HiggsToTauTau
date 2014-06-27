@@ -92,7 +92,7 @@ if options .nofit :
 for i,x in enumerate(points):
     seed = ("$((%d + $i))" % (i*10000)) if options.random == False else "-1"
     toys = "$n"
-    script.write("./combine {wsp} -M HybridNew {opts} --fork {fork} -T {T} --clsAcc 0 -m {mass} -v {v} -n {out} --saveHybridResult --saveToys -s {seed} -i {toys} --singlePoint {x} {opt}\n".format(
+    script.write("./combine {wsp} -M HybridNew {opts} --fork {fork} -T {T} --clsAcc 0 -m {mass} -v 2 -n {out} --saveHybridResult --saveToys -s {seed} -i {toys} --singlePoint {x} {opt}\n".format(
     wsp=workspaces[i], opts=options.options, fork=options.fork, T=options.T, mass=options.mass, seed=seed, out=options.out, x=x, v=options.v,
     toys=toys, opt=opts
     ))
@@ -144,7 +144,7 @@ number_of_jobs = {jobs}
 script_exe = {out}.sh
 additional_input_files = combine,{wsps}
 return_data = 1
-""".format(wsps=wsps, out=options.out, sched=sched, srv=(1 if options.server else 0), queue=options.queue, jobs=options.j, total=options.t))
+""".format(wsps=wsps, out=options.out, sched=sched, srv=0, queue=options.queue, jobs=options.j, total=options.t))
 
 if options.prio: cfg.write("""
 [GRID]

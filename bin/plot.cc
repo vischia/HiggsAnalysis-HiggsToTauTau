@@ -180,7 +180,9 @@ int main(int argc, char* argv[])
     TGraph* observed  = 0;
     if(!expectedOnly){
       observed = new TGraph();
+      std::cout << "Filling observed limit plot, just checking" << std::endl;
       plot.fillCentral(directory, observed, "higgsCombineTest.HybridNew.mH$MASS");
+      std::cout << "Filled observed limit plot, just checking" << std::endl;
     }
     // expected limit
     TGraph* expected  = new TGraph();
@@ -196,7 +198,9 @@ int main(int argc, char* argv[])
     TGraph* observed_low  = 0;
     if(!expectedOnly){
       observed_low = new TGraph();
+      std::cout << "Filling low observed limit plot, just checking" << std::endl;
       plot.fillCentral(directory, observed_low, "higgsCombineTest.HybridNew.mH$MASS", "low");
+      std::cout << "Filled low observed limit plot, just checking" << std::endl;
     }
     // low expected limit
     TGraph* expected_low  = new TGraph();
@@ -207,6 +211,8 @@ int main(int argc, char* argv[])
     // low 1-sigma uncertainty band
     TGraphAsymmErrors* inner_low  = new TGraphAsymmErrors();
     plot.fillBand(directory, inner_low, "CLs", true, "low");
+    
+    std::cout << "Filled all bands, just checking" << std::endl; 
 
     // make the plot
     SetStyle();

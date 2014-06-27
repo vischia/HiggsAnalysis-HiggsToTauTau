@@ -8,6 +8,7 @@ PlotLimits::PlotLimits(const char* output, const edm::ParameterSet& cfg) :
   min_  (cfg.existsAs<double>("min" ) ? cfg.getParameter<double>("min" ) :    0.),
   max_  (cfg.existsAs<double>("max" ) ? cfg.getParameter<double>("max" ) :   -1.),
   log_  (cfg.existsAs<int   >("log" ) ? cfg.getParameter<int   >("log" ) :     0),
+  c_    (cfg.existsAs<bool  >("c"   ) ? cfg.getParameter<bool  >("c"   ) : false),
   png_  (cfg.existsAs<bool  >("png" ) ? cfg.getParameter<bool  >("png" ) : false),
   pdf_  (cfg.existsAs<bool  >("pdf" ) ? cfg.getParameter<bool  >("pdf" ) : false),
   txt_  (cfg.existsAs<bool  >("txt" ) ? cfg.getParameter<bool  >("txt" ) : false),
@@ -166,13 +167,15 @@ PlotLimits::fillCentral(const char* directory, TGraph* plot, const char* filenam
 	// For such cases it is necessary to consider the first and last point before and after the 
 	// uppler limit exclusion starts to be able to close the contour for plotting. 
 	if(!first_low){
-	  if((central[imass]==0.5 && central[imass-1]>0.5) || central[imass]!=0.5) {
+	  if((central[imass]==1 && central[imass-1]>1) || central[imass]!=1) {
+	    //if((central[imass]==0.5 && central[imass-1]>0.5) || central[imass]!=0.5) {
 	    plot->SetPoint(ipoint++, bins_[imass], central[imass]);
 	    //std::cout<< "lastlow" << central[imass] << " " << bins_[imass] << std::endl;
 	  }
 	}
 	if(first_low){
-	  if((central[imass]==0.5 && central[imass+1]>0.5) || central[imass]!=0.5) {
+	  //if((central[imass]==0.5 && central[imass+1]>0.5) || central[imass]!=0.5) {
+	  if((central[imass]==1 && central[imass+1]>1) || central[imass]!=1) {
 	    plot->SetPoint(ipoint++, bins_[imass], central[imass]); first_low=false;
 	    //std::cout<< "firstlow" << central[imass] << " "  << central[imass+1] << " "<< bins_[imass] << std::endl;
 	  }

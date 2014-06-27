@@ -12,7 +12,7 @@ parser.add_option("--condor", dest="condor", default=False, action="store_true",
 parser.add_option("--old", dest="old", default=False, action="store_true",
                   help="Switch between tanb_grid.py and tanb_grid_new.py. If validated this could be deleted [Default: False]")
 parser.add_option("--model", dest="modelname", default="mhmax-mu+200", type="string",
-                  help="The model which should be used (choices are: mhmax-mu+200, mhmodp, mhmodm). Default: \"mhmax-mu+200\"]")
+                  help="The model which should be used (choices are: mhmax-mu+200, mhmodp, mhmodm, mssm_Hp_xsec). Default: \"mhmax-mu+200\"]")
 ## check number of arguments; in case print usage
 (options, args) = parser.parse_args()
 if len(args) < 1 :
@@ -117,7 +117,7 @@ def submit(name, key, masses) :
             else :
                 os.system('touch {PWD}/log/{LOG}'.format(
                     PWD=os.getcwd(), LOG=script_file_name[script_file_name.rfind('/')+1:].replace('.sh', '.log')))
-                submit_script.write('bsub -q 8nh -oo {PWD}/log/{LOG} {PWD}/{FILE}\n'.format(
+                submit_script.write('bsub -q 8nm -oo {PWD}/log/{LOG} {PWD}/{FILE}\n'.format(
                     LOG=script_file_name[script_file_name.rfind('/')+1:].replace('.sh', '.log'), PWD=os.getcwd(), FILE=script_file_name))
     os.system('chmod a+x %s' % submit_name)
 

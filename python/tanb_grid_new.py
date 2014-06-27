@@ -18,11 +18,11 @@ parser.add_option_group(model_opts)
 morph_opts = OptionGroup(parser, "MORPHING OPTIONS", "With these options you can configure what kind of morphing should be applied for a given decay channel. Note that the same morphing mode is applied to all templates in a given input file.")
 morph_opts.add_option("--morphing-htt_ee", dest="morphing_htt_ee", default="NEAREST_NEIGHBOUR", type="choice",
                  help="Choose the morphing type for the htt_ee decay channel. [Default: \"NEAREST_NEIGHBOUR\"]", choices=["MORPHED", "NEAREST_NEIGHBOUR"])
-morph_opts.add_option("--morphing-htt_em", dest="morphing_htt_em", default="MORPHED", type="choice",
+morph_opts.add_option("--morphing-htt_em", dest="morphing_htt_em", default="NEAREST_NEIGHBOUR", type="choice",
                  help="Choose the morphing type for the htt_em decay channel. [Default: \"MORPHED\"]", choices=["MORPHED", "NEAREST_NEIGHBOUR"])
 morph_opts.add_option("--morphing-htt_mm", dest="morphing_htt_mm", default="NEAREST_NEIGHBOUR", type="choice",
                  help="Choose the morphing type for the htt_mm decay channel. [Default: \"NEAREST_NEIGHBOUR\"]", choices=["MORPHED", "NEAREST_NEIGHBOUR"])
-morph_opts.add_option("--morphing-htt_mt", dest="morphing_htt_mt", default="MORPHED", type="choice",
+morph_opts.add_option("--morphing-htt_mt", dest="morphing_htt_mt", default="NEAREST_NEIGHBOUR", type="choice",
                  help="Choose the morphing type for the htt_mt decay channel. [Default: \"MORPHED\"]", choices=["MORPHED", "NEAREST_NEIGHBOUR"])
 morph_opts.add_option("--morphing-htt_et", dest="morphing_htt_et", default="MORPHED", type="choice",
                  help="Choose the morphing type for the htt_et decay channel. [Default: \"MORPHED\"]", choices=["MORPHED", "NEAREST_NEIGHBOUR"])
@@ -92,6 +92,8 @@ class MODEL(object) :
         """
         ## create model
         modelMaker = ModelParams_BASE(self.mass, self.tanb)
+        if self.modelpath == 'mssm_Hp_xsec' :
+            self.modeltype = 'mssm_Hp_xsec'
         modelMaker.setup_model(period, self.modelpath, self.modeltype)
         ## create central value
         for proc in procs :
@@ -100,11 +102,15 @@ class MODEL(object) :
         for shift in shifts :
             buffer = {}
             for proc in procs :
-                buffer[(period,decay,proc)] = (modelMaker.create_model_params(period, proc, decay, shift+'-'),
-                                               modelMaker.create_model_params(period, proc, decay, shift+'+'))
+                print "[tanb_grid_new] self.modeltype do caralho is: ", self.modeltype,", self.modelpath is: ", self.modelpath 
+                if self.modeltype != 'mssm_Hp_xsec' :
+                    buffer[(period,decay,proc)] = (modelMaker.create_model_params(period, proc, decay, shift+'-'),
+                                                   modelMaker.create_model_params(period, proc, decay, shift+'+'))
             if shift in self.uncerts.keys() :
+                print "[tanb_grid_new] Updating shift uncertainty keys: ", shift, ", because keys are: ", self.uncerts.keys()
                 self.uncerts[shift].update(buffer)
             else :
+                print "[tanb_grid_new] NOT Updating shift uncertainty keys: ", shift, ", because keys are: ", self.uncerts.keys()
                 self.uncerts[shift] = buffer
             
 def main() :
@@ -147,6 +153,7 @@ def main() :
     old_file.close()
     
     ## determine MODEL for given datacard.
+    print "determine MODEL for given datacard: the modelname is ", options.modelname
     model = MODEL(float(options.mA), float(options.tanb), options.modelname)
     match = re.compile('(?P<CHN>\w*)_\w*_[0-9]?_(?P<PER>[0-9]*\w*)')
     for bin in card.list_of_bins() :
@@ -156,13 +163,22 @@ def main() :
             chn = match.match(bin).group('CHN')
             per = match.match(bin).group('PER')
         else :
+            print match.match(path[path.rfind('/'):])
+            print match.match(path[path.rfind('/')+1:])
             chn = match.match(path[path.rfind('/')+1:]).group('CHN')
             per = match.match(path[path.rfind('/')+1:]).group('PER')
         ## check which processes are still missing for given decay channel and run period
         missing_procs = model.missing_procs(chn, per, card.list_of_signals())
         if len(missing_procs)>0 :
             print "updating model to parameter set:", per, chn, missing_procs, ['mu', 'pdf']
-            model.setup_model(per, chn, missing_procs, ['mu', 'pdf'])
+            print "FIXME: on second thought, let's not use uncertainties since we don't have them for charged higgs, haha. Must figure out how to fix that only for charged higgs"
+            print "FIXME: the shit is such as if the datacard is named htt_*, as in the partial try, it picks up that as missing process and updates accordingly the model name, which currently is: ", options.modelname  
+            if options.modelname == 'mssm_Hp_xsec' :
+                #model.setup_model(per, chn, options.modelname, [''])
+                model.setup_model(per, chn, missing_procs, [''] )
+            else :
+                model.setup_model(per, chn, missing_procs, ['mu', 'pdf'])
+            
     ## create new datacard
     new_name = path[:path.rfind('.txt')]+'_%.2f'%float(options.tanb)+'.txt'
     os.system("cp {SRC} {TARGET}".format(SRC=path, TARGET=new_name))

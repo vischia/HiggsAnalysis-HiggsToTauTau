@@ -68,7 +68,7 @@ double singlePointLimit(std::string filename, float tanb, unsigned int LIMIT_TYP
     tree->GetEvent(idx);
     if( fabs(type-target)<0.001 ){
       // allow for some tolerance for determination of type
-      if( verbosity>1 ){ std::cout << "tanb: " << tanb << " limit (" << limitType(LIMIT_TYPE) << ") = " << value/tanb << std::endl; }
+      if( verbosity>1 ){ std::cout << "tanb: " << tanb << " limit (" << limitType(LIMIT_TYPE) << ") = " << value/tanb << " Undivided limit = " << value << std::endl; }
       limit = value/tanb; 
     }
   }
@@ -82,8 +82,10 @@ std::vector<CrossPoint> crossPoints(TGraph*& graph)
     Determine all cross points of graph with y==1 
   */
   std::vector<CrossPoint> points;
+  std::cout << "Filling cross points \"with y==1\" " << std::endl; 
   for(int ibin=0; ibin<graph->GetN()-1; ++ibin){
-    if((graph->GetY()[ibin]-1.)*(graph->GetY()[ibin+1]-1.)<=0){
+    cout << "graph->GetY()[ibin]-1.=" << graph->GetY()[ibin]-1. << ", graph->GetY()[ibin+1]-1.=" << graph->GetY()[ibin+1]-1.<<  "" << endl;
+    if((graph->GetY()[ibin]-1)*(graph->GetY()[ibin+1]-1)<=0){
       points.push_back(std::make_pair(ibin, (graph->GetY()[ibin]>graph->GetY()[ibin+1])));
     }
   }
@@ -106,19 +108,21 @@ void fillTree(TTree*& tree, TGraph*& graph, double& limit, double& lowlimit, uns
     }
     tanb_help=tanb->first;
   }
+  cout << "Filled graph. Will now determine the smooth curve on graph for interpolation" << endl;
   // determine smooth curve on graph for interpolation
   TSpline3* spline = new TSpline3("spline", graph, "r", 3., 10.);
   // linear polarisation func
   TF1 *fnc = 0;
   // determine all crossing points with y==1 
   std::vector<CrossPoint> points = crossPoints(graph);
-
+  
   int dist = 1;
   bool filled = false, lowfilled=false;
   unsigned int np = 0;
   unsigned int steps = 10e6; 
   if(points.size()>0) limit = graph->GetX()[upper_exclusion ? points.begin()->first : points.end()->first];
 
+  cout << "Starting loop on the points for determining crossings. Points.size()=" << points.size() << endl;
   for(std::vector<CrossPoint>::const_reverse_iterator point = points.rbegin(); point!=points.rend(); ++point, ++np){
   //for(std::vector<CrossPoint>::iterator point = points.begin(); point!=points.end(); ++point, ++np){
     //double min = (point->first-dist)>0 ? graph->GetX()[point->first-dist] : graph->GetX()[0]; 
@@ -185,14 +189,14 @@ void fillTree(TTree*& tree, TGraph*& graph, double& limit, double& lowlimit, uns
     if(value<1)
       {
 	std::cout << "WARNING: no crossing found - all tanb values excluded: " << value << std::endl;
-// 	if(itype == observed)     { limit=3.00; }
-// 	if(itype == plus_2sigma)  { limit=5.00; }
-// 	if(itype == plus_1sigma)  { limit=4.00; }
-// 	if(itype == expected)     { limit=3.00; }
-// 	if(itype == minus_1sigma) { limit=2.50; }
-// 	if(itype == minus_2sigma) { limit=2.00; }
-	limit=2;
-	lowlimit=2;
+ 	if(itype == observed)     { limit=1.00; lowlimit=1.00;}
+ 	if(itype == plus_2sigma)  { limit=3.00; lowlimit=3.00;}
+ 	if(itype == plus_1sigma)  { limit=2.00; lowlimit=2.00;}
+ 	if(itype == expected)     { limit=1.50; lowlimit=1.50;}
+ 	if(itype == minus_1sigma) { limit=1.00; lowlimit=1.00;}
+ 	if(itype == minus_2sigma) { limit=0.50; lowlimit=0.50;}
+//	limit=2;
+//	lowlimit=2;
 	tree->Fill();
       }
     else
@@ -204,7 +208,7 @@ void fillTree(TTree*& tree, TGraph*& graph, double& limit, double& lowlimit, uns
 	if(itype == expected)     { limit=tanb_help*value; }
 	if(itype == minus_1sigma) { limit=tanb_help*value; }
 	if(itype == minus_2sigma) { limit=tanb_help*value; }
-	lowlimit=0.5;
+	lowlimit=0.2;///////0.5;
 	tree->Fill();
       }
   }
@@ -236,7 +240,7 @@ void fillTree(TTree*& tree, TGraph*& graph, double& limit, double& lowlimit, uns
   return;
 }
 
-void asymptoticLimit(const char* outputfile, const char* inputfiles, unsigned int verbosity=0, bool upper_exclusion=true)
+void asymptoticLimit(const char* outputfile, const char* inputfiles, unsigned int verbosity=2, bool upper_exclusion=true)
 {
   // prepare input names from inputfiles
   std::vector<std::string> tanb_files;
@@ -246,7 +250,7 @@ void asymptoticLimit(const char* outputfile, const char* inputfiles, unsigned in
   for(std::vector<std::string>::const_iterator tanb_file = tanb_files.begin(); tanb_file!=tanb_files.end(); ++tanb_file){
     tanb_values[atof(tanb_file->substr(tanb_file->rfind("_")+1, tanb_file->find(".root")-tanb_file->rfind("_")-1).c_str())] = *tanb_file;
   }
-
+  
   double limit, lowlimit;
   TGraph* graph = new TGraph();
   TFile* file = TFile::Open(outputfile, "update");

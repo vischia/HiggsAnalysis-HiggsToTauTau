@@ -53,7 +53,9 @@ plotTanb(const char* filename, const char* channel, bool draw_injected_=false, d
   // do the plotting 
   TCanvas canv = TCanvas("canv", "Limits", 600, 600);
   // do the plotting 
-  plottingTanb(canv, plain, plain_low, innerBand, innerBand_low, outerBand, outerBand_low, expected, expected_low, observed, observed_low, lowerLEP, upperLEP, higgsBands, comparisons, xaxis_, yaxis_, injected, min_, max_, log_, transparent_);
+  std::string theory("MSSM m_{h}^{modp} scenario");
+
+  plottingTanb(canv, plain, plain_low, innerBand, innerBand_low, outerBand, outerBand_low, expected, expected_low, observed, observed_low, lowerLEP, upperLEP, higgsBands, comparisons, xaxis_, yaxis_, theory, injected, min_, max_, log_, transparent_);
   /// setup the CMS Preliminary
   CMSPrelim(dataset_.c_str(), "", 0.145, 0.835);
   // write results to files

@@ -99,7 +99,17 @@ class ModelDatacard(DatacardAdaptor) :
                             new_rates[index_order.index(bin+'_'+proc)] = str(new_rate)
                         else :
                             ## get signal rate from file
+                            print "Opening file: ", path[:path.rfind('/')+1]+card.path_to_file(bin, proc)
                             hist_file = ROOT.TFile(path[:path.rfind('/')+1]+card.path_to_file(bin, proc), 'READ')
+                            print "###############################################################################"
+                            print "Trying to open histogram: ", card.path_to_shape(bin, proc).replace('$MASS', mass)
+                            print "###############################################################################"
+                            if proc == 'HTB' :
+                                if (card.path_to_file(bin, proc)).rfind('tb') :
+                                    continue
+                            if proc == 'TBH' :
+                                if (card.path_to_file(bin, proc)).rfind('taunu') :
+                                    continue
                             hist = hist_file.Get(card.path_to_shape(bin, proc).replace('$MASS', mass))
                             new_rates[index_order.index(bin+'_'+proc)] = str(hist.Integral())
                 new_line = 'rate\t'+'\t'.join(new_rates)+'\n'

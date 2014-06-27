@@ -1,4 +1,5 @@
 #include <map>
+#include <iostream>
 
 #include "TH1F.h"
 #include "TColor.h"
@@ -35,6 +36,7 @@ plottingTanb(TCanvas& canv, TGraphAsymmErrors* plain, TGraphAsymmErrors* plain_l
   TColor* ph = gROOT->GetColor(kYellow);
   ph->SetAlpha(0.0);
 
+  std::cout << "[plottingTanb.cxx] Now shifting the values of the axis labels in log case" << std::endl;
   // for logx the label for x axis values below 100 needs to be slightly shifted to prevent 
   // the label from being printed into the canvas
   int shift_label = 1.;
@@ -42,6 +44,8 @@ plottingTanb(TCanvas& canv, TGraphAsymmErrors* plain, TGraphAsymmErrors* plain_l
     if(observed){ observed->GetX()[0] = observed->GetX()[0]+0.01; }
     if(expected->GetX()[0]<100.){ shift_label = -1.; }
   }
+
+  std::cout << "[plottingTanb.cxx] Now drawing the frame" << std::endl;
   // draw a frame to define the range
   TH1F* hr = canv.DrawFrame(outerBand->GetX()[0]-shift_label*.01, min, outerBand->GetX()[outerBand->GetN()-1]+.01, max);
   // format x axis

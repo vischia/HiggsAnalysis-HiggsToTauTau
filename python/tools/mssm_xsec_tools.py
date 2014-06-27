@@ -51,7 +51,7 @@ class mssm_xsec_tools():
         # Unpack
         type, type_info = input
         type_info['BR-bb'] = self.lookup_value(mA, tan_beta, "h_brbb_%s" % type)  
-
+ 
     def _add_mass(self, mA, tan_beta, input):
         " Lookup the mass for a given higgs type "
         type, type_info = input
@@ -201,3 +201,123 @@ class mssm_xsec_tools():
             self._add_santander((higgs_type, output['higgses'][higgs_type]))
         
         return output
+
+
+
+
+class mssm_Hp_xsec_tools():
+
+    def __init__(self, inputFileName):
+        self.inputFileName_ = inputFileName
+        self.inputFile_ = ROOT.TFile(self.inputFileName_)
+
+        self.unit_pb = 1.
+        self.unit_fb = self.unit_pb*1.e-3
+
+    @staticmethod
+    def _add_in_quadrature(*xs):
+        return math.sqrt(sum(x*x for x in xs))
+
+    def lookup_value(self, mA, tan_beta, histo):
+        try:
+            histo = self.inputFile_.Get(histo)
+            bin = histo.FindBin(mA, tan_beta)
+            return histo.GetBinContent(bin)
+        except AttributeError:
+            print "Failed to load histogram '%s' from file %s !!" % (histo, inputFileName_)
+
+    @staticmethod
+    def santander_matching(mass, xsec_4f, xsec_5f):
+        t = ROOT.TMath.Log(mass/4.75) - 2.0
+        return (1.0/(1.0 + t))*(xsec_4f + t*xsec_5f)
+
+    @staticmethod
+    def santander_error_matching(mass, x_4f, x_5f):
+        t = ROOT.TMath.Log(mass/4.75) - 2.0
+        return (1.0/(1.0 + t))*(x_4f + t*x_5f)
+
+    def _get_ma_mass(self, mA, tan_beta):
+        "Convert higgs mass into A mass on the fly"
+        return self.lookup_value(mA, tan_beta, "h_mA")        
+
+    def _add_br_hptaunu(self, mA, tan_beta, input):
+        " Lookup the branching ratio for Hp->taunu"
+        # Unpack (type not really needed: we have only charged higgs here.
+        type, type_info = input
+        if type == 'Hp' :
+            type_info['BR-taunu'] = self.lookup_value(self._get_ma_mass(mA, tan_beta), tan_beta, "h_brtaunu_%s" % type)
+            return
+        else :
+            type_info['BR-taunu'] = 1
+            return
+
+    def _add_br_hptb(self, mA, tan_beta, input):
+        " Lookup the branching ratio for Hp->tb"
+        # Unpack (type not really needed: we have only charged higgs here.
+        type, type_info = input
+        if type == 'Hp' :
+            type_info['BR-tb'] = self.lookup_value(self._get_ma_mass(mA, tan_beta), tan_beta, "h_brtb_%s" % type) 
+            return
+        else :
+            type_info['BR-tb'] = 1
+            return
+        
+    # Convert mHp (from datacard) to mA    
+    def _add_mass(self, mA, tan_beta, input):
+        " Lookup the mass for a given higgs type "
+        type, type_info = input
+        if type == 'Hp':
+            print "FIXME: I am looking up Hp mass"  
+            type_info['mass'] = mA
+            #            mAtemp = self.lookup_value(mA, tan_beta, "h_mA")
+            #mA = self._get_ma_mass(mA, tan_beta)
+            return
+        if type == 'A':
+            print "FIXME: I am looking up A mass"
+            type_info['mass'] = self._get_ma_mass(mA, tan_beta)
+            mA = self.lookup_value(mA, tan_beta, "h_mA")
+            return
+        print "FIXME: Should not be there"
+
+    def _add_xsec(self, mA, tan_beta, input):
+        # Type not really needed: we have only charged higgs here.
+        type, type_info = input
+        type_info.setdefault('xsec', {})
+        if type == 'Hp' :
+            for prod_type, unit in [ ('HTB', self.unit_pb), ('TBH', self.unit_pb) ]:
+                print "------------ HP XSEC: ma " , mA, " tanbeta ", tan_beta , " unit ", unit , " value: ", self.lookup_value(tan_beta, mA, "h_sam_%s" % type)  
+                type_info['xsec'][prod_type] = unit*self.lookup_value(tan_beta, mA, "h_sam_%s" % type)
+            return
+        if type == 'A' :
+            for prod_type, unit in [ ('HTB', self.unit_pb), ('TBH', self.unit_pb) ]:
+                type_info['xsec'][prod_type] = unit*3
+            return
+        
+    def query(self, mA, tan_beta):
+
+        # Here we only need dictionary for Hp and A. And hack the brs to account only for Hp
+        #higgs_types = [ 'h', 'A', 'H', 'Hp' ]
+        #        higgs_types = [ 'A', 'Hp' ]
+        higgs_types = [ 'Hp' ]
+        
+        # Build emtpy dictionaries for each Higgs type
+        output = {
+            'mA' : mA,
+            'tan_beta' : tan_beta,
+            'higgses' : {
+                #'h'  : {},
+                #'A'  : {},
+                #'H'  : {},
+                'Hp' : {}
+            }
+        }
+
+        for higgs_type in higgs_types:
+            self._add_br_hptaunu(mA, tan_beta, (higgs_type, output['higgses'][higgs_type]))
+            self._add_br_hptb(mA, tan_beta, (higgs_type, output['higgses'][higgs_type]))
+            self._add_mass(mA, tan_beta, (higgs_type, output['higgses'][higgs_type]))
+            self._add_xsec(mA, tan_beta, (higgs_type, output['higgses'][higgs_type]))
+        return output
+
+
+

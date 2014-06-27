@@ -63,6 +63,8 @@ class MakeDatacard :
                      ,"qqH":["VBF", "qqH", "vbf"]
                      ,"ZH" :["ZH"]
                      ,"WH" :["WH"]
+                     ,"HTB":["HTB"]
+                     ,"TBH":["TBH"] 
                      }
               ## mapping of unique (standardized) decay channel names to all possible decay channels
               self.standardized_decay_channels = {

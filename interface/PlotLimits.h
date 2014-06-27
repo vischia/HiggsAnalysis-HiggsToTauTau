@@ -192,6 +192,8 @@ class PlotLimits {
   double max_;
   /// log scale for plotting (depending on option can be on y axis on z axis)
   int log_;
+  /// print out C format
+  bool c_;
   /// print out png format
   bool png_;
   /// print out pdf and eps format

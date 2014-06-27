@@ -123,7 +123,7 @@ number_of_jobs = 1
 script_exe = {out}.sh
 additional_input_files = combine,{wsps}
 return_data = 1
-""".format(wsps=wsps, out=options.out, sched=sched, srv=(1 if options.server else 0), queue=options.queue))
+""".format(wsps=wsps, out=options.out, sched=sched, srv=0, queue=options.queue))
 
 if options.prio: cfg.write("""
 [GRID]

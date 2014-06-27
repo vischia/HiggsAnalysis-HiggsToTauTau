@@ -465,12 +465,12 @@ if options.optAsym :
     elif "bbH" in options.fitModel :
         model = "--physics-model 'tmp=HiggsAnalysis.HiggsToTauTau.PhysicsBSMModel:floatingMSSMXSHiggs'"
         opts  = "--physics-model-options 'modes=bbH;bbHRange=0:BBH-BOUND'"
-    ## MSSM ggH while bbH is profiled (GGH-BOUND will be resolved in limit.create_card_workspace_with_physics_model)
+    ## MSSM HTB while TBH is profiled (HTB-BOUND will be resolved in limit.create_card_workspace_with_physics_model)
     if "HTB" in options.fitModel :
         model = "--physics-model 'tmp=HiggsAnalysis.HiggsToTauTau.PhysicsBSMModel:floatingChargedHiggs'"
         #        model = "--physics-model 'tmp=HiggsAnalysis.CombinedLimit.SimpleHeavyChHiggsModel:heavych'"
         opts  = "--physics-model-options 'modes=HTB;HTBRange=0:HTB-BOUND'"
-    ## MSSM bbH while ggH is profiled (BBH-BOUND will be resolved in limit.create_card_workspace_with_physics_model)
+    ## MSSM TBH while HTB is profiled (TBH-BOUND will be resolved in limit.create_card_workspace_with_physics_model)
     elif "TBH" in options.fitModel :
         model = "--physics-model 'tmp=HiggsAnalysis.HiggsToTauTau.PhysicsBSMModel:floatingChargedHiggs'"
         #        model = "--physics-model 'tmp=HiggsAnalysis.CombinedLimit.SimpleHeavyChHiggsModel:heavych'"
@@ -617,10 +617,10 @@ if options.optTanb or options.optTanbPlus :
         cmd = ""
         if options.optTanb :
             cycle = 1
-            cmd = "submit-slave.py --bin combine --method tanb"
+            cmd = "submit-slave.py --bin combine --method tanb --model mssm_Hp_xsec"
         elif options.optTanbPlus :
             if options.setup :
-                cmd = "submit-slave.py --bin combine --method tanb {OLD}".format(OLD="--old" if options.old else "")
+                cmd = "submit-slave.py --bin combine --method tanb {OLD} --model mssm_Hp_xsec".format(OLD="--old" if options.old else "")
         if not cmd == "" :
             grid= []
             sub = "--interactive" if options.optTanbPlus else "--toysH 100 -t 200 -j 100 --random --server "

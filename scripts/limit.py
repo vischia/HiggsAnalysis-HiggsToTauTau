@@ -305,6 +305,8 @@ def create_card_workspace_with_physics_model(mass) :
             if "BOUND" in opt :
                 opt = opt.replace("GGH-BOUND", str(bounds["ggH-bbH", mass][0]))
                 opt = opt.replace("BBH-BOUND", str(bounds["ggH-bbH", mass][1]))
+                opt = opt.replace("HTB-BOUND", str(bounds["HTB-TBH", mass][0]))
+                opt = opt.replace("TBH-BOUND", str(bounds["HTB-TBH", mass][1]))
             ## add options to workspace
             wsopts.append(('--PO', opt))
     return create_card_workspace(mass, inputs, output, wsopts)
@@ -1051,13 +1053,24 @@ for directory in args :
         tanb_inputfiles = ""
         ## fetch workspace for each tanb point
         directoryList = os.listdir(".")
+        print "********************************************** directoryList ***********************************************"
+        print directoryList
+        print "************************************************************************************************************"
         for wsp in directoryList :
+            print "********************************************** current wsp, re, re.match(r\"batch_\d+(.\d\d)?.root\" ***********************************************"
+            print wsp
+            print re
+            print re.match(r"batch_\d+(.\d\d)?.root", wsp)
+            print "************************************************************************************************************"
             if re.match(r"batch_\d+(.\d\d)?.root", wsp) :
                 tanb_inputfiles += wsp.replace("batch", "point")+","
+                print "********************************************** tanb_inputfiles *********************************************"
+                print tanb_inputfiles
+                print "************************************************************************************************************"
                 tanb_string = wsp[wsp.rfind("_")+1:]
                 if not options.refit :
-                    tasks.append(
-                        ["combine -M Asymptotic -n .tanb{tanb} --run both -C {CL} {minuit} {prefit} --minimizerStrategy {strategy} -m {mass} {user} {wsp}".format(
+                    tasks.append(  
+                        ["combine -v 2 -M Asymptotic -n .tanb{tanb} --run both -C {CL} {minuit} {prefit} --minimizerStrategy {strategy} -m {mass} {user} {wsp}".format(
                         CL=options.confidenceLevel, minuit=minuitopt, prefit=prefitopt,strategy=options.strategy,mass=mass, wsp=wsp, user=options.userOpt, tanb=tanb_string),
                          "mv higgsCombine.tanb{tanb}.Asymptotic.mH{mass}.root point_{tanb}".format(mass=mass, tanb=tanb_string)
                          ]

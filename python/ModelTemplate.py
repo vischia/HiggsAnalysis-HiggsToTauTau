@@ -222,6 +222,7 @@ class ModelTemplate():
                     combined_template = None
                     self.pivotals = {}; self.fill_pivotals(proc, label, self.input_file)
                     for higgs in params.list_of_higgses :
+                        print "[ModelTemplate] higgs: ", higgs,  "xsecs: ", params.xsecs[higgs], ": br: " , params.brs[higgs], ": hist scale: ", hist_scale  
                         scale = float(params.xsecs[higgs])*float(params.brs[higgs])*hist_scale
                         histo = self.single_template(dir, proc, self.save_float_conversion(params.masses[higgs]), label, scale, MODE)
                         if combined_template :
