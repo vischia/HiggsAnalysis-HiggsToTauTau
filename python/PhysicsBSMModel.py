@@ -206,9 +206,15 @@ class FloatingMSSMXSChargedHiggs(MSSMLikeHiggsModel):
         #self.modelBuilder.doVar("ggH_xsec[%g]" % (mssm_xsec['higgses']['A']['xsec']['ggF'      ]*mssm_xsec['higgses']['A']['BR']))
         #
         ## Define signal strengths on ggH and bbH as POI, NOTE: the range of the POIs is defined here
-        self.modelBuilder.doVar("r_HTB[%s,%s,%s]" % (str((float(self.HTBRange[0])+float(self.HTBRange[1]))/2.), self.HTBRange[0], self.HTBRange[1]));
-        self.modelBuilder.doVar("r_TBH[%s,%s,%s]" % (str((float(self.TBHRange[0])+float(self.TBHRange[1]))/2.), self.TBHRange[0], self.TBHRange[1]));
-        poi = ",".join(["r_"+m for m in self.modes])
+
+        ### TEST ME ### self.modelBuilder.doVar("r_HTB[%s,%s,%s]" % (str((float(self.HTBRange[0])+float(self.HTBRange[1]))/2.), self.HTBRange[0], self.HTBRange[1]));
+        ### TEST ME ### self.modelBuilder.doVar("r_TBH[%s,%s,%s]" % (str((float(self.TBHRange[0])+float(self.TBHRange[1]))/2.), self.TBHRange[0], self.TBHRange[1]));
+
+        self.modelBuilder.doVar("xs[%s,%s,%s]" % (1., 0., 20.));
+        self.modelBuilder.doVar("br_HTB[%s,%s,%s]" % (0.5, 0., 1.));
+                                
+        ### TEST ME ### poi = ",".join(["r_"+m for m in self.modes])
+        poi = "xs" 
         ## Define Higgs boson mass as another parameter. It will be floating if mARange is set otherwise it will be treated
         ## as fixed. NOTE: this is only left here as an extended example. It's not useful to have mA floating at the moment.
         if self.modelBuilder.out.var("MH"):
@@ -232,17 +238,26 @@ class FloatingMSSMXSChargedHiggs(MSSMLikeHiggsModel):
         ## define set of POIs
         self.modelBuilder.doSet("POI",poi)
     def getHiggsSignalYieldScale(self,production,decay, energy):
-        if production == "HTB" or production == "TBH":
-            ## This is an example how to multiply the yields r_ggH and r_bbH with the roofit variables ggH_xsec and bbH_xsec
-            ## that have been defined above, with the help of a roofit expression.
-            #
-            #self.modelBuilder.factory_('expr::%s_yield("@0*@1", r_%s, %s_xsec)' % (production, production, production))
-            #
-            ## This is the trivial model that we follow now. We just pass on the values themselves. Yes this is just a
-            ## trivial renaming, but we leave it in as an example. Instead also r_ggH and r_bbH could be passed on directly
-            ## in the return function instead of the newly defined variables ggH_yields or bbH_yield.
-            self.modelBuilder.factory_('expr::%s_yield("@0", r_%s)' % (production, production))
+
+### TESTME ###         if production == "HTB" or production == "TBH":
+### TESTME ###             ## This is an example how to multiply the yields r_ggH and r_bbH with the roofit variables ggH_xsec and bbH_xsec
+### TESTME ###             ## that have been defined above, with the help of a roofit expression.
+### TESTME ###             #
+### TESTME ###             #self.modelBuilder.factory_('expr::%s_yield("@0*@1", r_%s, %s_xsec)' % (production, production, production))
+### TESTME ###             #
+### TESTME ###             ## This is the trivial model that we follow now. We just pass on the values themselves. Yes this is just a
+### TESTME ###             ## trivial renaming, but we leave it in as an example. Instead also r_ggH and r_bbH could be passed on directly
+### TESTME ###             ## in the return function instead of the newly defined variables ggH_yields or bbH_yield.
+### TESTME ###             self.modelBuilder.factory_('expr::%s_yield("@0", r_%s)' % (production, production))
+### TESTME ###             return "%s_yield" % production
+
+        if production == "HTB":
+            self.modelBuilder.factory_('expr::HTB_yield("@0*@1", xs, br_HTB)')
             return "%s_yield" % production
+        if production == "TBH":
+            self.modelBuilder.factory_('expr::TBH_yield("@0*(1- @1)", xs, br_HTB)')
+            return "%s_yield" % production
+
         ## This just corresponds to entry points to extend the model to other production channels like qqH, ttH, VH. 
         #
         #if production == "qqH": return ("r_qqH" if "qqH" in self.modes else 1)
